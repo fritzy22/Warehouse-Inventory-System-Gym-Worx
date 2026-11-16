@@ -1,0 +1,567 @@
+<section class="panel" id="panel-purchase_request" hidden>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-2 mb-3">
+    <div>
+      <h1 class="h3 mb-1" id="prPageTitle">Purchase Requests</h1>
+      <p class="text-muted mb-0 small" id="prPageSubtitle">Submit replenishment requests, review manager approvals, and track fulfillment progress.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+      <button type="button" class="btn btn-warning btn-sm fw-semibold flex-grow-1 flex-md-grow-0" id="btnNewPurchaseRequest" onclick="openNewPrModal()" data-module="purchase_request">
+        <i class="bi bi-plus-lg me-1"></i>Create Purchase Request
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Filter Pills -->
+  <div class="d-flex flex-nowrap overflow-x-auto gap-1 mb-3 pb-1 gw-filter-chips" id="prStatusFilterGroup" role="group" aria-label="Filter purchase requests by status">
+    <button type="button" class="btn btn-sm btn-dark text-nowrap" data-pr-status="" onclick="filterPurchaseRequestsByStatus('')">All</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="Draft" onclick="filterPurchaseRequestsByStatus('Draft')">
+      Draft <span class="badge bg-secondary-subtle text-dark border ms-1" id="prCountDraft">0</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="Pending Approval" onclick="filterPurchaseRequestsByStatus('Pending Approval')">
+      Pending Approval <span class="badge bg-warning text-dark ms-1" id="prCountPending">0</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="For Revision" onclick="filterPurchaseRequestsByStatus('For Revision')">
+      Returned for Revision <span class="badge bg-warning-subtle text-dark border ms-1" id="prCountRevision">0</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="Approved" onclick="filterPurchaseRequestsByStatus('Approved')">
+      Approved <span class="badge bg-primary-subtle text-primary border ms-1" id="prCountApproved">0</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="in_progress" onclick="filterPurchaseRequestsByStatus('in_progress')">
+      Ordering
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="Completed" onclick="filterPurchaseRequestsByStatus('Completed')">
+      Completed
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-pr-status="Rejected" onclick="filterPurchaseRequestsByStatus('Rejected')">
+      Rejected
+    </button>
+  </div>
+
+  <!-- Purchase Orders Awaiting Manager Approval Card -->
+  <div class="card gym-table-container mb-3 border-amber shadow-sm" id="poApprovalQueueCard" hidden>
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-cart-check-fill text-warning fs-5"></i>
+        <h6 class="mb-0 gw-section-title">Purchase Orders Awaiting Manager Approval</h6>
+        <span class="badge bg-warning text-dark font-monospace" id="poApprovalQueueBadge">0 pending</span>
+      </div>
+      <small class="text-muted">Direct central warehouse replenishment orders</small>
+    </div>
+    <div class="table-responsive gym-table-scroll">
+      <table class="table gym-table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>PO Number</th>
+            <th>Supplier</th>
+            <th>Prepared By</th>
+            <th>Order Date</th>
+            <th>Items / Ordered Qty</th>
+            <th>Total Cost</th>
+            <th class="text-end text-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="poApprovalQueueTable">
+          <tr><td colspan="7" class="text-center text-muted py-3 fst-italic">No purchase orders currently awaiting approval.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card gym-table-container shadow-sm" id="prMainCard">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center" id="prMainCardHeader">
+      <h6 class="mb-0 gw-section-title" id="prMainCardTitle">All Purchase Requests</h6>
+      <small class="text-muted" id="prMainCardSubtitle">Requests submitted by store staff</small>
+    </div>
+    <div class="table-responsive gym-table-scroll">
+      <table class="table gym-table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Request No.</th>
+            <th>Requested By</th>
+            <th>Date / Urgency</th>
+            <th>Items / Qty</th>
+            <th>Approval / Fulfillment</th>
+            <th>Purpose / Manager Comments</th>
+            <th class="text-end text-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="prTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Compact Card / List View (No Horizontal Scrolling) -->
+    <div class="d-md-none p-2 p-sm-3" id="prMobileList">
+      <div class="text-center text-muted py-4 fst-italic">Loading purchase requests...</div>
+    </div>
+  </div>
+</section>
+
+<!-- New / Edit Purchase Request Modal (3-Step Wizard) -->
+<div class="modal fade" id="prModal" tabindex="-1" aria-labelledby="prModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <form id="prForm" onsubmit="savePurchaseRequest(event)">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="prModalTitle">Create Purchase Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="pr_id">
+
+          <!-- 3-Step Wizard Navigation Bar -->
+          <div class="d-flex align-items-center justify-content-between p-2 mb-3 bg-light rounded border">
+            <div class="d-flex align-items-center gap-2 pr-wizard-step-tab active" id="prStepTab1" role="button" onclick="goToPrWizardStep(1)">
+              <span class="badge rounded-circle bg-primary text-white" id="prStepBadge1" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;">1</span>
+              <span class="small fw-bold text-dark" id="prStepLabel1">Select Items</span>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+            <div class="d-flex align-items-center gap-2 pr-wizard-step-tab" id="prStepTab2" role="button" onclick="goToPrWizardStep(2)">
+              <span class="badge rounded-circle bg-secondary text-white" id="prStepBadge2" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;">2</span>
+              <span class="small fw-semibold text-muted" id="prStepLabel2">Review Details</span>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+            <div class="d-flex align-items-center gap-2 pr-wizard-step-tab" id="prStepTab3" role="button" onclick="goToPrWizardStep(3)">
+              <span class="badge rounded-circle bg-secondary text-white" id="prStepBadge3" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;">3</span>
+              <span class="small fw-semibold text-muted" id="prStepLabel3">Confirm &amp; Submit</span>
+            </div>
+          </div>
+
+          <!-- Revision / Manager Feedback Banner -->
+          <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" id="prRevisionAlert" hidden>
+            <i class="bi bi-exclamation-triangle-fill fs-5 mt-1"></i>
+            <div>
+              <div class="fw-bold">Returned for Revision by Manager</div>
+              <div class="small" id="prRevisionCommentText"></div>
+            </div>
+          </div>
+
+          <!-- ================= STEP 1: SELECT ITEMS ================= -->
+          <div id="prWizardStep1">
+            <!-- Replenishment Suggestions Helper -->
+            <div class="card bg-light border mb-3" id="prSuggestionsCard">
+              <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center">
+                <div class="small fw-bold text-dark">
+                  <i class="bi bi-lightbulb-fill text-warning me-1"></i>Recommended Replenishment (Suggested Qty = Max Stock &minus; Available Stock)
+                </div>
+                <button type="button" class="btn btn-sm btn-primary py-0 px-2" onclick="addAllLowStockSuggestionsToPr()">
+                  <i class="bi bi-plus-circle me-1"></i>Add All Low-Stock Items
+                </button>
+              </div>
+              <div class="table-responsive gym-table-scroll" style="max-height: 180px;">
+                <table class="table gym-table table-sm table-hover align-middle mb-0">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-center">Available</th>
+                      <th class="text-center">Max Stock</th>
+                      <th class="text-center">Reorder Lvl</th>
+                      <th class="text-center">On Order / Pending</th>
+                      <th class="text-center">Suggested Qty</th>
+                      <th class="text-center">Additional Needed</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="prSuggestionsTable"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Add Single Product Row -->
+            <div class="row g-2 align-items-end bg-light p-2 rounded border mb-2">
+              <div class="col-12 col-md-5">
+                <label class="form-label small fw-semibold mb-1" for="pr_item_product">Product</label>
+                <select class="form-select form-select-sm" id="pr_item_product" onchange="handlePrProductSelectChange()"></select>
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1" for="pr_item_qty">Requested Qty</label>
+                <input type="number" class="form-control form-control-sm" id="pr_item_qty" min="1" step="1" value="1">
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1" for="pr_item_notes">Item Note (Optional)</label>
+                <input type="text" class="form-control form-control-sm" id="pr_item_notes" placeholder="Optional notes for this item">
+              </div>
+              <div class="col-12 col-md-2">
+                <button type="button" class="btn btn-dark btn-sm w-100" onclick="addPrLineItem()">
+                  <i class="bi bi-plus-lg me-1"></i>Add Item
+                </button>
+              </div>
+              <div class="col-12">
+                <div class="small text-muted" id="prProductStockHint">Select a product to view available stock, maximum stock, and suggested order quantity.</div>
+                <div id="prItemExcessWarning" hidden class="alert alert-warning py-1 px-2 small mt-2 mb-0 d-flex align-items-center gap-2 border-warning">
+                  <i class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0"></i>
+                  <span id="prItemExcessWarningText"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Requested Line Items Table -->
+            <div class="table-responsive gym-table-scroll mb-2">
+              <table class="table gym-table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th class="text-center">Available / Max</th>
+                    <th class="text-center">Suggested Qty</th>
+                    <th style="width:130px;">Requested Qty</th>
+                    <th>Line Notes</th>
+                    <th class="text-end">Remove</th>
+                  </tr>
+                </thead>
+                <tbody id="pr_items_table"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================= STEP 2: REVIEW DETAILS ================= -->
+          <div id="prWizardStep2" hidden>
+            <div id="prExcessStep2Alert" hidden class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-3 border-warning">
+              <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+              <div>
+                <strong class="text-dark">Surplus Request Notice:</strong> One or more items exceed maximum store capacity.
+                <div class="text-secondary">Please ensure your <strong>Business Justification</strong> below clearly explains the operational need for this surplus (e.g. promo rush, special member order, bulk packaging) so the Manager can review and approve.</div>
+              </div>
+            </div>
+
+            <div class="card p-3 mb-3 bg-light border">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="small fw-bold text-uppercase text-secondary">Assigned Destination Branch</span>
+                <span class="badge bg-primary px-3 py-1 fw-semibold fs-6" id="prAssignedBranchBadge">Main Store</span>
+              </div>
+              <small class="text-muted">Replenished stock will be delivered directly to this branch location upon fulfillment.</small>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-8">
+                <label class="form-label fw-semibold" for="pr_purpose">Business Justification / Purpose <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="pr_purpose" placeholder="e.g. Replenish fast-moving supplements and recovery gear for weekend rush">
+                <div class="form-text small">Explain why these items are required and how they will support store operations.</div>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold" for="pr_urgency">Urgency Level <span class="text-danger">*</span></label>
+                <select class="form-select" id="pr_urgency">
+                  <option value="Low">Low — Routine restock</option>
+                  <option value="Normal" selected>Normal — Standard replenishment</option>
+                  <option value="High">High — Stock approaching depletion</option>
+                  <option value="Urgent">Urgent — Critical out-of-stock</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="pr_remarks">Additional Store Notes (Optional)</label>
+                <input type="text" class="form-control" id="pr_remarks" placeholder="Enter special delivery instructions, preferred timing, or remarks for manager review">
+              </div>
+            </div>
+
+            <!-- Items Review Table in Step 2 -->
+            <div class="card border rounded-3 p-3">
+              <h6 class="fw-bold text-dark mb-2">Selected Items Summary</h6>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light small">
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-center">Requested Quantity</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="prStep2ReviewItemsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= STEP 3: CONFIRM & SUBMIT ================= -->
+          <div id="prWizardStep3" hidden>
+            <div class="alert alert-info d-flex align-items-start gap-2 mb-3">
+              <i class="bi bi-info-circle-fill fs-5 mt-0.5"></i>
+              <div>
+                <strong>Ready to Submit?</strong>
+                <div class="small">Please verify the details below. Once submitted, this purchase request will be routed to the Store Manager for review and approval.</div>
+              </div>
+            </div>
+
+            <div class="card border shadow-sm p-3 mb-3">
+              <div class="row g-3">
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Destination Branch</div>
+                  <div class="fw-bold text-primary" id="prConfirmBranch">Main Store</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Urgency</div>
+                  <div class="fw-bold" id="prConfirmUrgency">Normal</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Total Products</div>
+                  <div class="fw-bold" id="prConfirmItemCount">0 items</div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="small text-muted">Total Quantity</div>
+                  <div class="fw-bold font-monospace" id="prConfirmTotalQty">0 units</div>
+                </div>
+                <div class="col-12">
+                  <div class="small text-muted">Purpose / Justification</div>
+                  <div class="fw-semibold text-dark" id="prConfirmPurpose">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card border rounded-3 p-3">
+              <h6 class="fw-bold text-dark mb-2">Line Items Confirmation</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                  <thead class="table-light small">
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-center">Requested Qty</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody id="prConfirmItemsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
+          <div>
+            <button type="button" class="btn btn-outline-danger btn-cancel" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-outline-secondary ms-1" id="prWizardPrevBtn" onclick="prevPrWizardStep()" hidden>
+              &larr; Back
+            </button>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary fw-semibold" id="prSaveDraftBtn" onclick="savePrAsDraft()">
+              <i class="bi bi-file-earmark-text me-1"></i>Save as Draft
+            </button>
+            <button type="button" class="btn btn-primary fw-semibold" id="prWizardNextBtn" onclick="nextPrWizardStep()">
+              Next: Review Details &rarr;
+            </button>
+            <button type="submit" class="btn btn-success fw-bold" id="prSubmitBtn" hidden>
+              <i class="bi bi-send-check me-1"></i>Submit Purchase Request
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Manager Review & Approval Modal -->
+<div class="modal fade" id="prApproveModal" tabindex="-1" aria-labelledby="prApproveModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="prApproveModalTitle">
+          <i class="bi bi-check2-square text-warning me-2"></i>Review &amp; Approve Purchase Request
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="approve_pr_id">
+
+        <div class="row g-2 p-3 bg-light rounded border mb-3">
+          <div class="col-6 col-md-2">
+            <div class="small text-muted text-uppercase fw-semibold">Request No.</div>
+            <div class="fw-bold font-monospace fs-6" id="approvePrCode">-</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted text-uppercase fw-semibold">Requested By</div>
+            <div class="fw-semibold" id="approvePrRequester">-</div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="small text-muted text-uppercase fw-semibold">Request Date</div>
+            <div id="approvePrDate">-</div>
+          </div>
+          <div class="col-6 col-md-2">
+            <div class="small text-muted text-uppercase fw-semibold">Urgency</div>
+            <div id="approvePrUrgency">-</div>
+          </div>
+          <div class="col-12 col-md-3">
+            <div class="small text-muted text-uppercase fw-semibold">Purpose</div>
+            <div class="small fw-semibold text-break" id="approvePrPurpose">-</div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted text-uppercase fw-semibold">Remarks / Requester Notes</div>
+            <div class="small text-break" id="approvePrRemarks">-</div>
+          </div>
+        </div>
+
+        <div id="prApproveSurplusBanner" hidden class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-3 border-warning">
+          <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+          <div>
+            <strong class="text-dark">Surplus Request Detected:</strong> One or more items exceed maximum branch capacity.
+            <div class="text-secondary">Review the business justification and operational notes above. You may authorize the requested surplus, or click <strong>Cap at Suggested</strong> on any item to adjust the quantity before approving.</div>
+          </div>
+        </div>
+
+        <div class="alert alert-info py-2 px-3 small mb-3">
+          <i class="bi bi-info-circle-fill me-1"></i>
+          <strong>Manager Authority:</strong> Compare requested quantities against available stock and active orders. You may adjust any item's <strong>Approved Qty</strong> before approving. If you adjust any quantity, return for revision, or reject, provide a clear explanation below.
+        </div>
+
+        <div class="table-responsive gym-table-scroll mb-3">
+          <table class="table gym-table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Product</th>
+                <th class="text-center">Available Stock</th>
+                <th class="text-center">Max Stock</th>
+                <th class="text-center">Pending / On Order</th>
+                <th class="text-center">Suggested Qty</th>
+                <th class="text-center">Requested Qty</th>
+                <th style="width:140px;" class="text-center">Approved Qty</th>
+                <th>Stock Assessment</th>
+              </tr>
+            </thead>
+            <tbody id="approvePrItemsTable"></tbody>
+          </table>
+        </div>
+
+        <div class="mb-3" id="approvePrHistorySection">
+          <div class="small fw-bold text-uppercase text-muted mb-1"><i class="bi bi-clock-history me-1"></i>Request &amp; Revision History</div>
+          <div class="border rounded bg-light p-2 small" id="approvePrHistoryBox" style="max-height: 120px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label fw-semibold" for="pr_approve_comment">
+            Manager Comment / Quantity Adjustment / Rejection Reason
+            <span class="badge bg-warning text-dark ms-1" id="prCommentRequiredBadge" hidden>Required due to quantity adjustment</span>
+          </label>
+          <textarea class="form-control" id="pr_approve_comment" rows="2" placeholder="Explain any quantity adjustments, revision instructions, or rejection reasons..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-danger" onclick="submitPrDecision('reject')">
+            <i class="bi bi-x-circle me-1"></i>Reject Request
+          </button>
+          <button type="button" class="btn btn-warning text-dark fw-semibold" onclick="submitPrDecision('return_for_revision')">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Return for Revision
+          </button>
+          <button type="button" class="btn btn-success fw-semibold" onclick="submitPrDecision('approve')">
+            <i class="bi bi-check2-circle me-1"></i>Approve Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Request Detail & Workflow Tracker Modal -->
+<div class="modal fade" id="prDetailModal" tabindex="-1" aria-labelledby="prDetailModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2 overflow-hidden">
+          <button type="button" class="btn btn-link text-dark p-0 d-md-none text-decoration-none me-1" data-bs-dismiss="modal" onclick="closeModal('prDetailModal')" aria-label="Back">
+            <i class="bi bi-chevron-left fs-5"></i>
+          </button>
+          <h5 class="modal-title fw-bold mb-0 text-truncate" id="prDetailModalTitle">Purchase Request Details</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closeModal('prDetailModal')" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 4-Step Progress Tracker -->
+        <div class="gw-pr-stepper" id="prDetailStepper"></div>
+
+        <!-- Request Summary Card -->
+        <div class="gw-pr-summary-box" id="prDetailMeta"></div>
+
+        <!-- Optional Manager / Rejection Feedback Banner -->
+        <div id="prDetailFeedbackBanner"></div>
+
+        <!-- Two Tabs: Requested Items & Activity Log -->
+        <ul class="nav nav-tabs mb-3" id="prDetailTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="tab-pr-items" data-bs-toggle="tab" data-bs-target="#pane-pr-items" type="button" role="tab" aria-controls="pane-pr-items" aria-selected="true">
+              <i class="bi bi-list-check me-1.5 text-primary"></i>Requested Items
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="tab-pr-activity" data-bs-toggle="tab" data-bs-target="#pane-pr-activity" type="button" role="tab" aria-controls="pane-pr-activity" aria-selected="false">
+              <i class="bi bi-clock-history me-1.5 text-primary"></i>Activity Log
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="prDetailTabContent">
+          <!-- Tab 1: Requested Items -->
+          <div class="tab-pane fade show active" id="pane-pr-items" role="tabpanel" aria-labelledby="tab-pr-items">
+            <!-- Requested Items & Fulfillment Progress Section -->
+            <div class="gw-pr-block-title">
+              <i class="bi bi-list-check text-violet"></i>
+              <span>Requested Items &amp; Quantity Tracking</span>
+            </div>
+            <div class="gw-pr-items-box gym-table-scroll">
+              <table class="table gym-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th class="text-center">Requested Qty</th>
+                    <th class="text-center">Approved Qty</th>
+                    <th class="text-center">Reserved Qty</th>
+                    <th class="text-center">Released Qty</th>
+                    <th class="text-center">Outstanding Qty</th>
+                    <th class="d-none d-md-table-cell">Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="prDetailItemsBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tab 2: Activity Log -->
+          <div class="tab-pane fade" id="pane-pr-activity" role="tabpanel" aria-labelledby="tab-pr-activity">
+            <!-- Split Section (Desktop side-by-side) -->
+            <div class="d-none d-md-flex row g-3">
+              <div class="col-md-5">
+                <div class="gw-pr-block-title">
+                  <i class="bi bi-cart3 text-violet"></i>
+                  <span>Linked Purchase Orders</span>
+                </div>
+                <div class="gw-pr-card-box" id="prDetailLinkedPos"></div>
+              </div>
+              <div class="col-md-7">
+                <div class="gw-pr-block-title">
+                  <i class="bi bi-clock-history text-violet"></i>
+                  <span>Transaction &amp; Approval History</span>
+                </div>
+                <div class="gw-pr-card-box" id="prDetailHistory"></div>
+              </div>
+            </div>
+
+            <!-- Mobile Accordions -->
+            <div class="accordion accordion-flush gw-pr-mobile-accordion d-md-none" id="prDetailMobileAccordion">
+              <div class="accordion-item border rounded mb-2 overflow-hidden">
+                <h2 class="accordion-header" id="headingLinkedPos">
+                  <button class="accordion-button collapsed py-2 px-3 text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLinkedPos" aria-expanded="false" aria-controls="collapseLinkedPos">
+                    <i class="bi bi-cart3 me-2 text-violet"></i>Linked Purchase Orders
+                  </button>
+                </h2>
+                <div id="collapseLinkedPos" class="accordion-collapse collapse" aria-labelledby="headingLinkedPos" data-bs-parent="#prDetailMobileAccordion">
+                  <div class="accordion-body p-2" id="prDetailLinkedPosMobile"></div>
+                </div>
+              </div>
+              <div class="accordion-item border rounded overflow-hidden">
+                <h2 class="accordion-header" id="headingHistory">
+                  <button class="accordion-button collapsed py-2 px-3 text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHistory" aria-expanded="false" aria-controls="collapseHistory">
+                    <i class="bi bi-clock-history me-2 text-violet"></i>Transaction &amp; Approval History
+                  </button>
+                </h2>
+                <div id="collapseHistory" class="accordion-collapse collapse" aria-labelledby="headingHistory" data-bs-parent="#prDetailMobileAccordion">
+                  <div class="accordion-body p-2" id="prDetailHistoryMobile"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" id="prDetailModalFooter">
+        <button type="button" class="btn btn-light border px-4 py-1 fw-semibold" data-bs-dismiss="modal" onclick="closeModal('prDetailModal')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

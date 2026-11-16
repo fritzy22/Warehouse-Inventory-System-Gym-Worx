@@ -1,0 +1,223 @@
+<aside class="offcanvas-md offcanvas-start d-flex flex-column text-white flex-shrink-0" id="sidebarOffcanvas" tabindex="-1" aria-labelledby="sidebarOffcanvasLabel" data-bs-scroll="false">
+
+  <!-- Mobile offcanvas header -->
+  <div class="offcanvas-header d-md-none border-bottom border-secondary border-opacity-25 px-3 py-3">
+    <div class="d-flex align-items-center gap-2">
+      <span class="gw-brand-cube"><i class="bi bi-box-seam"></i></span>
+      <div class="lh-1">
+        <span class="d-block gw-sidebar-brand-title">GYMWORX</span>
+        <span class="d-block gw-sidebar-brand-subtitle" id="sidebarOffcanvasLabel">WAREHOUSE</span>
+      </div>
+    </div>
+    <button type="button" class="btn-close btn-close-white p-2" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Close navigation menu"></button>
+  </div>
+
+  <!-- Desktop brand header -->
+  <div class="d-none d-md-flex align-items-center justify-content-between gap-2 px-3 py-3 border-bottom border-secondary border-opacity-25 flex-shrink-0">
+    <div class="d-flex align-items-center gap-2 overflow-hidden">
+      <span class="gw-brand-cube"><i class="bi bi-box-seam"></i></span>
+      <div class="lh-1 sidebar-brand-text overflow-hidden">
+        <span class="d-block gw-sidebar-brand-title text-truncate">GYMWORX</span>
+        <span class="d-block gw-sidebar-brand-subtitle text-truncate">WAREHOUSE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scrollable nav body -->
+  <div class="offcanvas-body d-flex flex-column p-0 flex-grow-1 overflow-y-auto">
+    <nav class="nav flex-column flex-nowrap px-2 pt-2 pb-2 flex-grow-1" aria-label="Sidebar navigation">
+
+      <!-- STANDARD NAVIGATION (Admins, Managers, Officers) -->
+      <div id="standardNav" class="d-flex flex-column w-100 flex-grow-1">
+      <!-- OVERVIEW section -->
+      <small class="text-uppercase px-3 pt-1 pb-1" id="sidebarHeaderOverview">Overview</small>
+      <button class="nav-link d-flex align-items-center active" data-tab="dashboard" aria-current="page" title="Dashboard">
+        <i class="bi bi-house-door-fill me-2"></i><span class="sidebar-label">Dashboard</span>
+      </button>
+      <button class="nav-link d-flex align-items-center" data-tab="notifications" id="sidebarNavNotifications" title="Notifications">
+        <i class="bi bi-bell me-2"></i><span class="sidebar-label">Notifications</span>
+        <span class="badge rounded-pill nav-badge" id="sidebarNotifBadge" hidden>0</span>
+      </button>
+
+      <hr class="border-secondary my-1 mx-2 opacity-25" id="sidebarDividerWorkflow">
+
+      <!-- WORKFLOW section (Collapsible Purchasing Dropdown) -->
+      <small class="text-uppercase px-3 pt-1 pb-1" id="sidebarHeaderTransactions">Workflow</small>
+      <button type="button" class="nav-link gw-module-toggle d-flex align-items-center" data-gw-module="purchasing" id="sidebarModulePurchasing" aria-expanded="false" aria-controls="submenuPurchasing" title="Purchasing">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        <span class="sidebar-label me-auto">Workflow</span>
+        <span class="badge rounded-pill nav-badge me-2" id="sidebarPurchasingAggBadge" hidden>0</span>
+        <i class="bi bi-chevron-down gw-module-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="gw-nav-collapse" id="submenuPurchasing">
+        <div class="gw-nav-collapse-inner d-flex flex-column">
+          <!-- Approval Queue (Manager Authority) -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="request_approval" data-module="request_approval" title="Approval Queue">
+            <i class="bi bi-check2-circle me-2"></i><span class="sidebar-label">Approval Queue</span>
+            <span class="badge rounded-pill nav-badge" id="sidebarApprovalBadge" hidden>0</span>
+          </button>
+          <!-- Purchase Requests -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="purchase_request" data-module="purchase_request" title="Purchase Requests">
+            <i class="bi bi-file-earmark-text me-2"></i><span class="sidebar-label" id="sidebarLabelPR">Purchase Requests</span>
+            <span class="badge rounded-pill nav-badge" id="sidebarPrBadge" hidden>0</span>
+          </button>
+          <!-- Purchase Orders -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="purchase_order" data-module="purchase_order" title="Purchase Orders">
+            <i class="bi bi-cart-check me-2"></i><span class="sidebar-label">Purchase Orders</span>
+            <span class="badge rounded-pill nav-badge" id="sidebarPoBadge" hidden>0</span>
+          </button>
+          <!-- Stock Receiving -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="stock_receiving" data-module="stock_receiving" title="Stock Receiving">
+            <i class="bi bi-box-arrow-in-down me-2"></i><span class="sidebar-label">Stock Receiving</span>
+            <span class="badge rounded-pill nav-badge" id="sidebarReceivingBadge" hidden>0</span>
+          </button>
+          <!-- Stock Releasing -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="stock_releasing" data-module="stock_releasing" title="Stock Releasing">
+            <i class="bi bi-box-arrow-up me-2"></i><span class="sidebar-label">Stock Releasing</span>
+          </button>
+          <!-- Purchase Returns -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="purchase_return" data-module="purchase_return" title="Purchase Returns">
+            <i class="bi bi-arrow-return-left me-2"></i><span class="sidebar-label">Purchase Returns</span>
+          </button>
+          <!-- Stocks Return -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="stocks_return" data-module="stocks_return" title="Stocks Return">
+            <i class="bi bi-arrow-counterclockwise me-2"></i><span class="sidebar-label">Stocks Return</span>
+          </button>
+          <!-- Adjustments -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="adjustment" data-module="adjustment" title="Stock Adjustments">
+            <i class="bi bi-sliders me-2"></i><span class="sidebar-label">Adjustments</span>
+          </button>
+          <!-- Stock Movements -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="stock_movement" data-module="stock_movement" title="Stock Movements">
+            <i class="bi bi-arrow-left-right me-2"></i><span class="sidebar-label">Stock Movements</span>
+          </button>
+        </div>
+      </div>
+
+      <hr class="border-secondary my-1 mx-2 opacity-25" id="sidebarDividerCatalog">
+
+      <!-- INVENTORY section (Collapsible Inventory Dropdown) -->
+      <small class="text-uppercase px-3 pt-1 pb-1" id="sidebarHeaderLookup">Inventory</small>
+      <button type="button" class="nav-link gw-module-toggle d-flex align-items-center" data-gw-module="inventory" id="sidebarModuleInventory" aria-expanded="false" aria-controls="submenuInventory" title="Inventory Management">
+        <i class="bi bi-box-seam me-2"></i>
+        <span class="sidebar-label me-auto">Inventory</span>
+        <i class="bi bi-chevron-down gw-module-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="gw-nav-collapse" id="submenuInventory">
+        <div class="gw-nav-collapse-inner d-flex flex-column">
+          <!-- Products & Stock -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="product" data-module="product" title="Products & Stock Levels">
+            <i class="bi bi-box-seam me-2"></i><span class="sidebar-label">Products &amp; Stock</span>
+          </button>
+          <!-- Categories -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="category" data-module="category" title="Categories">
+            <i class="bi bi-folder2 me-2"></i><span class="sidebar-label">Categories</span>
+          </button>
+          <!-- Suppliers -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="supplier" data-module="supplier" title="Suppliers">
+            <i class="bi bi-people me-2"></i><span class="sidebar-label">Suppliers</span>
+          </button>
+          <!-- Product ↔ Supplier -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="product_supplier" data-module="product_supplier" title="Product ↔ Supplier">
+            <i class="bi bi-link-45deg me-2"></i><span class="sidebar-label">Product ↔ Supplier</span>
+          </button>
+        </div>
+      </div>
+
+      <hr class="border-secondary my-1 mx-2 opacity-25" id="sidebarDividerReports">
+
+      <!-- REPORTS section (Collapsible Reports Dropdown) -->
+      <small class="text-uppercase px-3 pt-1 pb-1" id="sidebarHeaderReports">Reports</small>
+      <button type="button" class="nav-link gw-module-toggle d-flex align-items-center" data-gw-module="reports" id="sidebarModuleReports" aria-expanded="false" aria-controls="submenuReports" title="Reports Management">
+        <i class="bi bi-file-earmark-bar-graph me-2"></i>
+        <span class="sidebar-label me-auto">Reports</span>
+        <i class="bi bi-chevron-down gw-module-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="gw-nav-collapse" id="submenuReports">
+        <div class="gw-nav-collapse-inner d-flex flex-column">
+          <!-- Reports -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="inventory_report" data-module="inventory_report" title="Inventory Report">
+            <i class="bi bi-file-earmark-bar-graph me-2"></i><span class="sidebar-label">Reports</span>
+          </button>
+          <!-- Audit Logs -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="audit_log" data-module="stock_movement" title="Audit Logs">
+            <i class="bi bi-clock-history me-2"></i><span class="sidebar-label">Audit Logs</span>
+          </button>
+        </div>
+      </div>
+
+      <hr class="border-secondary my-1 mx-2 opacity-25" id="sidebarDividerAdmin">
+
+      <!-- SYSTEM section (Collapsible System Dropdown) -->
+      <small class="text-uppercase px-3 pt-1 pb-1" id="sidebarHeaderSystem">System</small>
+      <button type="button" class="nav-link gw-module-toggle d-flex align-items-center" data-gw-module="system" id="sidebarModuleSystem" aria-expanded="false" aria-controls="submenuSystem" title="System Management">
+        <i class="bi bi-gear me-2"></i>
+        <span class="sidebar-label me-auto">System</span>
+        <i class="bi bi-chevron-down gw-module-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="gw-nav-collapse" id="submenuSystem">
+        <div class="gw-nav-collapse-inner d-flex flex-column">
+          <!-- User Management -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="users" data-module="users" id="sidebarNavUsersRoles" title="User Management">
+            <i class="bi bi-people me-2"></i><span class="sidebar-label">User Management</span>
+          </button>
+          <!-- Settings / Roles & Permissions -->
+          <button class="nav-link gw-child-link d-flex align-items-center" data-tab="role" data-module="role" title="Settings">
+            <i class="bi bi-sliders2 me-2"></i><span class="sidebar-label">Settings</span>
+          </button>
+        </div>
+      </div>
+      </div><!-- /#standardNav -->
+
+      <!-- STORE REQUESTER EXCLUSIVE NAVIGATION (Exact Mockup Match) -->
+      <div id="requesterNav" class="d-flex flex-column w-100 flex-grow-1" hidden>
+        <!-- MAIN Section -->
+        <small class="text-uppercase px-3 pt-2 pb-1 sidebar-group-heading" id="requesterHeaderMain">MAIN</small>
+
+        <button class="nav-link d-flex align-items-center active" data-tab="dashboard" aria-current="page" title="Dashboard">
+          <i class="bi bi-box-seam me-2"></i><span class="sidebar-label">Dashboard</span>
+        </button>
+
+        <button class="nav-link d-flex align-items-center" data-tab="purchase_request" title="My Requests">
+          <i class="bi bi-file-earmark-minus me-2"></i><span class="sidebar-label">My Requests</span>
+        </button>
+
+        <button class="nav-link d-flex align-items-center" data-tab="product" title="My Inventory">
+          <i class="bi bi-box2 me-2"></i><span class="sidebar-label">My Inventory</span>
+        </button>
+
+        <button class="nav-link d-flex align-items-center position-relative" data-tab="notifications" title="Notifications">
+          <i class="bi bi-bell me-2"></i><span class="sidebar-label">Notifications</span>
+          <span class="badge rounded-circle bg-danger text-white ms-auto nav-badge d-inline-flex align-items-center justify-content-center" id="sidebarRequesterNotifBadge" style="width:20px;height:20px;padding:0;font-size:0.72rem;font-weight:700;line-height:1;" hidden>0</span>
+        </button>
+
+        <div class="pt-3"></div>
+
+        <!-- REPORTS Section -->
+        <small class="text-uppercase px-3 pt-1 pb-1 sidebar-group-heading" id="requesterHeaderReports">REPORTS</small>
+
+        <button class="nav-link d-flex align-items-center" data-tab="request_history" title="Request History">
+          <i class="bi bi-file-earmark-text me-2"></i><span class="sidebar-label">Request History</span>
+        </button>
+      </div><!-- /#requesterNav -->
+
+    </nav>
+  </div>
+
+  <!-- User area & Logout (fixed bottom footer) -->
+  <div class="flex-shrink-0 mt-auto p-3" id="sidebarUserBox">
+    <div class="d-flex align-items-center gap-2 mb-2 px-2 py-2 rounded-3 gw-sidebar-user-card">
+      <span class="d-inline-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0" style="width:34px;height:34px;" aria-hidden="true" id="sidebarUserAvatar">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <div class="lh-sm overflow-hidden sidebar-user-meta flex-grow-1">
+        <strong class="d-block small text-white text-truncate" id="sidebarUserName"><?php echo !empty($sessionUser) ? htmlspecialchars($sessionUser['first_name'] . ' ' . $sessionUser['last_name']) : '—'; ?></strong>
+        <span class="d-block text-truncate gw-sidebar-user-role" id="sidebarUserRole"><?php echo !empty($sessionUser['role_name']) ? htmlspecialchars($sessionUser['role_name']) : '—'; ?></span>
+      </div>
+      <i class="bi bi-chevron-down small text-white-50 sidebar-user-meta flex-shrink-0"></i>
+    </div>
+    <button class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 gw-sidebar-logout-btn" id="logoutBtn" aria-label="Log out">
+      <i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Logout</span>
+    </button>
+  </div>
+</aside>

@@ -1,0 +1,1128 @@
+
+<button id="modalTrigger" type="button" data-bs-toggle="modal" data-bs-target="" hidden></button>
+
+<template id="tmpl-badge-active">
+  <span class="gym-status gym-status--approved"><i class="bi bi-check-circle-fill"></i>Active</span>
+</template>
+<template id="tmpl-badge-inactive">
+  <span class="gym-status gym-status--rejected"><i class="bi bi-x-circle-fill"></i>Inactive</span>
+</template>
+<template id="tmpl-badge-pending">
+  <span class="badge bg-warning text-dark">Pending</span>
+</template>
+<template id="tmpl-badge-received">
+  <span class="badge bg-success">Received</span>
+</template>
+<template id="tmpl-badge-cancelled">
+  <span class="badge bg-danger">Cancelled</span>
+</template>
+<template id="tmpl-badge-status-generic">
+  <span class="badge bg-secondary"></span>
+</template>
+
+<template id="tmpl-btn-edit">
+  <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></button>
+</template>
+<template id="tmpl-btn-deactivate">
+  <button type="button" class="btn btn-sm btn-outline-danger" title="Deactivate"><i class="bi bi-slash-circle"></i></button>
+</template>
+<template id="tmpl-btn-reactivate">
+  <button type="button" class="btn btn-sm btn-outline-success" title="Reactivate"><i class="bi bi-arrow-counterclockwise"></i></button>
+</template>
+<template id="tmpl-btn-reset-password">
+  <button type="button" class="btn btn-sm btn-outline-secondary" title="Reset password"><i class="bi bi-key"></i></button>
+</template>
+<template id="tmpl-btn-remove-line">
+  <button type="button" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+</template>
+<template id="tmpl-txt-view-only">
+  <span class="text-muted small fst-italic">View only</span>
+</template>
+
+<template id="tmpl-stat-card">
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="mb-2"><i class="bi fs-4 text-warning stat-icon"></i></div>
+        <div class="fs-3 fw-bold text-break stat-value"></div>
+        <div class="text-muted small stat-label"></div>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="tmpl-stat-card-loading">
+  <div class="col-12"><div class="card p-3">Loading…</div></div>
+</template>
+<template id="tmpl-stat-card-error">
+  <div class="col-12"><div class="card p-3">Could not load dashboard data. Check your database connection.</div></div>
+</template>
+
+<template id="tmpl-row-empty">
+  <tr><td class="text-center text-muted py-4 fst-italic row-empty-cell"></td></tr>
+</template>
+<template id="tmpl-line-item-empty">
+  <tr><td class="text-center text-muted fst-italic py-2 line-empty-cell">No items added yet.</td></tr>
+</template>
+<template id="tmpl-line-item-simple">
+  <tr>
+    <td class="line-product"></td>
+    <td class="line-qty"></td>
+    <td class="text-end line-action"></td>
+  </tr>
+</template>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3 d-print-none">
+  <div id="toastSuccess" class="toast show align-items-center text-white border-0 bg-success" role="alert" aria-live="assertive" aria-atomic="true" hidden>
+    <div class="d-flex">
+      <div class="toast-body" id="toastSuccessBody"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" onclick="this.closest('#toastSuccess').hidden = true"></button>
+    </div>
+  </div>
+  <div id="toastError" class="toast show align-items-center text-white border-0 bg-danger" role="alert" aria-live="assertive" aria-atomic="true" hidden>
+    <div class="d-flex">
+      <div class="toast-body" id="toastErrorBody"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" onclick="this.closest('#toastError').hidden = true"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Reusable Compact Print & Receipt Modal (Standardized GymWorx Design) -->
+<div class="modal fade gw-print-modal" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered gw-print-modal-dialog modal-dialog-scrollable">
+    <div class="modal-content gw-print-modal-content">
+      <!-- Fixed Modal Header -->
+      <div class="modal-header gw-print-modal-header d-print-none">
+        <h5 class="modal-title d-flex align-items-center gap-2 mb-0" id="receiptModalTitle">
+          <i class="bi bi-file-earmark-text" id="receiptModalIcon"></i>
+          <span id="receiptModalTitleText">Print Stock Releasing Receipt</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Scrollable Receipt Preview Body -->
+      <div class="modal-body gw-print-modal-body">
+        <!-- Printable Receipt Paper Container -->
+        <div id="receiptPrintArea" class="gw-receipt-paper mx-auto w-100">
+          
+          <!-- Receipt Header / Branding -->
+          <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3 gap-3 flex-wrap flex-sm-nowrap gw-receipt-header">
+            <div class="d-flex align-items-start gap-3">
+              <span class="gw-brand-cube gw-receipt-cube flex-shrink-0">
+                <i class="bi bi-box-seam"></i>
+              </span>
+              <div>
+                <h4 class="fw-bold mb-0 text-dark fs-5" style="letter-spacing: -0.01em;">GYMWORX</h4>
+                <div class="text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.22em; color: #57534E;">W A R E H O U S E</div>
+                <div class="text-muted small mt-1" style="font-size: 0.8rem; line-height: 1.35;">
+                  Gym Equipment &amp; Supplements Inventory<br>
+                  Corrales Ave, Cagayan de Oro City<br>
+                  088-123-4567
+                </div>
+              </div>
+            </div>
+            <div class="text-start text-sm-end flex-shrink-0">
+              <div class="fw-bold fs-6 text-uppercase text-dark" id="receiptDocTypeTitle">STOCK RELEASING RECEIPT</div>
+              <div class="mt-1">
+                <span id="receiptRefNoBadge" class="gw-receipt-ref-badge">REL-0009</span>
+              </div>
+              <div class="text-muted small mt-1" style="font-size: 0.75rem;" id="receiptIssuedDate">Issued: Oct 28, 2026 03:41 AM</div>
+            </div>
+          </div>
+
+          <!-- Document Information (2-Column Cards Grid) -->
+          <div class="row g-3 mb-3" id="receiptInfoGrid">
+            <!-- Left Card -->
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-info-card h-100">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0">
+                    <i class="bi bi-calendar3" id="receiptDateIcon"></i>
+                  </div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label" id="receiptDateLabel">Date Released</div>
+                    <div class="gw-receipt-value" id="receiptDateValue">-</div>
+                  </div>
+                </div>
+                <hr class="gw-receipt-divider my-2">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0">
+                    <i class="bi bi-file-earmark-text" id="receiptRefIcon"></i>
+                  </div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label" id="receiptRefLabel">Reference No.</div>
+                    <div class="gw-receipt-value" id="receiptRefValue">-</div>
+                  </div>
+                </div>
+                <div id="receiptExtraLeftWrap" style="display: none;">
+                  <hr class="gw-receipt-divider my-2">
+                  <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                    <div class="gw-receipt-icon-box flex-shrink-0">
+                      <i class="bi bi-link-45deg" id="receiptExtraLeftIcon"></i>
+                    </div>
+                    <div class="lh-sm">
+                      <div class="gw-receipt-label" id="receiptExtraLeftLabel">Linked Ref</div>
+                      <div class="gw-receipt-value" id="receiptExtraLeftValue">-</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Card -->
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-info-card h-100">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0">
+                    <i class="bi bi-shop" id="receiptPartyIcon"></i>
+                  </div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label" id="receiptPartyLabel">Released To</div>
+                    <div class="gw-receipt-value" id="receiptPartyValue">-</div>
+                  </div>
+                </div>
+                <hr class="gw-receipt-divider my-2">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0">
+                    <i class="bi bi-person" id="receiptUserIcon"></i>
+                  </div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label" id="receiptUserLabel">Released By</div>
+                    <div class="gw-receipt-value" id="receiptUserValue">-</div>
+                  </div>
+                </div>
+                <hr class="gw-receipt-divider my-2">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0">
+                    <i class="bi bi-check-circle" id="receiptStatusIcon"></i>
+                  </div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label">Status</div>
+                    <div class="gw-receipt-value text-success" id="receiptStatusValue">
+                      <i class="bi bi-check-circle-fill me-1"></i>Completed
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="table-responsive rounded border mb-3 gw-receipt-table-scroll" style="border-color: #D8D5CF !important;">
+            <table class="table table-sm align-middle mb-0 gw-receipt-table">
+              <thead>
+                <tr id="receiptTableHeaderRow">
+                  <th style="width: 45px;" class="text-center">#</th>
+                  <th>Product Description</th>
+                  <th style="width: 75px;" class="text-center" id="receiptColQty">Qty</th>
+                  <th style="width: 130px;" class="text-end" id="receiptColPrice">Unit Price</th>
+                  <th style="width: 140px;" class="text-end" id="receiptColSubtotal">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="receiptItemsBody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Totals and Remarks Section (2 Cards) -->
+          <div class="row g-3" id="receiptTotalsRemarksGrid">
+            <!-- Remarks Card (Left) -->
+            <div class="col-12 col-sm-7">
+              <div class="gw-receipt-info-card d-flex align-items-start gap-2 h-100">
+                <div class="gw-receipt-icon-box flex-shrink-0">
+                  <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark small">Remarks</div>
+                  <div class="text-secondary small mt-1" id="receiptRemarksText">This stock releasing receipt serves as proof of item release from the warehouse.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Amount Card (Right) -->
+            <div class="col-12 col-sm-5">
+              <div class="gw-receipt-total-card h-100 text-end">
+                <div class="gw-receipt-total-label" id="receiptTotalLabel">Total Amount</div>
+                <div class="gw-receipt-total-value font-monospace" id="receiptTotalValue">PHP 0.00</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Fixed Modal Footer -->
+      <div class="modal-footer gw-print-modal-footer d-print-none">
+        <button type="button" class="btn gw-receipt-btn-close d-flex align-items-center gap-1" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i>
+          <span>Close</span>
+        </button>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn gw-receipt-btn-pdf d-flex align-items-center gap-1" id="receiptDownloadPdfBtn" onclick="downloadReceiptPdf()">
+            <i class="bi bi-file-earmark-arrow-down"></i>
+            <span>Download PDF</span>
+          </button>
+          <button type="button" class="btn gw-receipt-btn-print d-flex align-items-center gap-1" id="receiptNativePrintBtn" onclick="printReceiptDoc()">
+            <i class="bi bi-printer-fill"></i>
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Responsive Inventory Report Preview Modal (Standardized GymWorx Design) -->
+<div class="modal fade gw-print-modal" id="inventoryReportModal" tabindex="-1" aria-labelledby="inventoryReportModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered gw-print-modal-dialog modal-dialog-scrollable">
+    <div class="modal-content gw-print-modal-content">
+      <div class="modal-header gw-print-modal-header d-print-none">
+        <h5 class="modal-title d-flex align-items-center gap-2 mb-0" id="inventoryReportModalTitle">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>Print Inventory Report</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body gw-print-modal-body">
+        <!-- Printable Report Card -->
+        <div id="inventoryReportPrintArea" class="gw-receipt-paper mx-auto w-100">
+          
+          <!-- Header / Company Branding -->
+          <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3 gap-3 flex-wrap flex-sm-nowrap gw-receipt-header">
+            <div class="d-flex align-items-start gap-3">
+              <span class="gw-brand-cube gw-receipt-cube flex-shrink-0">
+                <i class="bi bi-box-seam"></i>
+              </span>
+              <div>
+                <h4 class="fw-bold mb-0 text-dark fs-5" style="letter-spacing: -0.01em;">GYMWORX</h4>
+                <div class="text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.22em; color: #57534E;">W A R E H O U S E</div>
+                <div class="text-muted small mt-1" style="font-size: 0.8rem; line-height: 1.35;">
+                  Gym Equipment &amp; Supplements Inventory<br>
+                  Corrales Ave, Cagayan de Oro City<br>
+                  088-123-4567
+                </div>
+              </div>
+            </div>
+            <div class="text-start text-sm-end flex-shrink-0">
+              <div class="fw-bold fs-6 text-uppercase text-dark">INVENTORY REPORT</div>
+              <div class="mt-1">
+                <span class="gw-receipt-ref-badge">INV-SUMMARY</span>
+              </div>
+              <div class="text-muted small mt-1" style="font-size: 0.75rem;" id="invModalGeneratedDate"></div>
+            </div>
+          </div>
+
+          <!-- Report Metadata Grid -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-info-card h-100">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0"><i class="bi bi-funnel"></i></div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label">Category Filter</div>
+                    <div class="gw-receipt-value" id="invModalCategoryName">All Categories</div>
+                  </div>
+                </div>
+                <hr class="gw-receipt-divider my-2">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0"><i class="bi bi-person"></i></div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label">Generated By</div>
+                    <div class="gw-receipt-value" id="invModalUserName">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-info-card h-100">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0"><i class="bi bi-boxes"></i></div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label">Total Stock Items</div>
+                    <div class="gw-receipt-value font-monospace" id="invModalTotalItemsCount">0 items</div>
+                  </div>
+                </div>
+                <hr class="gw-receipt-divider my-2">
+                <div class="gw-receipt-info-row d-flex align-items-center gap-2">
+                  <div class="gw-receipt-icon-box flex-shrink-0"><i class="bi bi-activity"></i></div>
+                  <div class="lh-sm">
+                    <div class="gw-receipt-label">Stock Health</div>
+                    <div class="d-flex gap-2 flex-wrap mt-1">
+                      <span class="badge bg-success" id="invModalInStockCount">0 In Stock</span>
+                      <span class="badge bg-warning text-dark" id="invModalLowStockCount">0 Low Stock</span>
+                      <span class="badge bg-danger" id="invModalOutOfStockCount">0 Out of Stock</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary KPI Cards -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-info-card">
+                <div class="gw-receipt-label text-uppercase fw-semibold">Total Quantity on Hand</div>
+                <div class="fs-4 fw-bold font-monospace text-dark mt-1" id="invModalTotalQty">0</div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="gw-receipt-total-card">
+                <div class="gw-receipt-total-label">Total Inventory Valuation</div>
+                <div class="gw-receipt-total-value font-monospace mt-1" id="invModalTotalValue">PHP 0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inventory Table -->
+          <div class="table-responsive rounded border mb-3 gw-receipt-table-scroll" style="border-color: #D8D5CF !important;">
+            <table class="table table-sm align-middle mb-0 gw-receipt-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;" class="text-center">#</th>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th style="width: 70px;" class="text-center">Unit</th>
+                  <th style="width: 110px;" class="text-end">Unit Price</th>
+                  <th style="width: 80px;" class="text-center">Qty</th>
+                  <th style="width: 120px;" class="text-end">Total Value</th>
+                  <th style="width: 100px;" class="text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="invModalTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #EBE9E4; border-top: 1px solid #D8D5CF;">
+                  <td colspan="5" class="text-end fw-semibold text-dark">Total:</td>
+                  <td class="text-center font-monospace fw-bold text-dark" id="invModalTfootQty">0</td>
+                  <td class="text-end font-monospace fw-bold text-dark fs-6" id="invModalTfootValue">PHP 0.00</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Footer Note -->
+          <div class="border-top pt-3 text-center text-muted small">
+            <p class="mb-0 text-muted" style="font-size: 0.8rem;">This document is an official computer-generated inventory report from the GymWorx Warehouse Management System.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer gw-print-modal-footer d-print-none">
+        <button type="button" class="btn gw-receipt-btn-close d-flex align-items-center gap-1" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i>
+          <span>Close</span>
+        </button>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn gw-receipt-btn-pdf d-flex align-items-center gap-1" id="invModalDownloadPdfBtn" onclick="downloadInventoryReportPdf()">
+            <i class="bi bi-file-earmark-arrow-down"></i>
+            <span>Download PDF</span>
+          </button>
+          <button type="button" class="btn gw-receipt-btn-print d-flex align-items-center gap-1" id="invModalNativePrintBtn">
+            <i class="bi bi-printer-fill"></i>
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Smooth Recent Transactions Modal -->
+<div class="modal fade" id="recentTransactionsModal" tabindex="-1" aria-labelledby="recentTransactionsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom">
+        <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="recentTransactionsModalTitle">Recent Transactions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="table-responsive gym-table-scroll mb-0" style="max-height: 60vh;">
+          <table class="table gym-table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3 ps-md-4">REF</th>
+                <th>TYPE</th>
+                <th class="d-none d-sm-table-cell">USER</th>
+                <th>STATUS</th>
+                <th class="d-none d-md-table-cell pe-3 pe-md-4">DATE</th>
+              </tr>
+            </thead>
+            <tbody id="recentTransactionsModalBody">
+              <tr><td colspan="5" class="text-center text-muted py-4 fst-italic">Loading recent transactions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Smooth Stock Alerts Modal -->
+<div class="modal fade" id="stockAlertsModal" tabindex="-1" aria-labelledby="stockAlertsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom">
+        <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="stockAlertsModalTitle">Stock Alerts</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush" id="stockAlertsModalList" style="max-height: 60vh; overflow-y: auto;">
+          <div class="text-center text-muted py-4 fst-italic">Loading stock alerts...</div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Smooth Recent Notifications Modal -->
+<div class="modal fade" id="recentNotificationsModal" tabindex="-1" aria-labelledby="recentNotificationsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="recentNotificationsModalTitle">Recent Notifications</h5>
+          <span class="badge bg-danger rounded-pill px-2 py-0.5" id="recentNotificationsModalBadge" hidden>0 unread</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="list-group list-group-flush" id="recentNotificationsModalList" style="max-height: 60vh; overflow-y: auto;">
+          <div class="text-center text-muted py-4 fst-italic">Loading notifications...</div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-sm btn-link text-violet text-decoration-none fw-semibold p-0" onclick="closeModal('recentNotificationsModal'); navigateTo('notifications');">View All Notifications Page</button>
+        <button type="button" class="btn btn-outline-secondary px-4 btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Quick Actions Modal -->
+<div class="modal fade" id="quickActionsModal" tabindex="-1" aria-labelledby="quickActionsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom">
+        <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="quickActionsModalTitle">Quick Actions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-2">
+        <div class="list-group list-group-flush">
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex align-items-center justify-content-between border-0 rounded mb-1" onclick="closeModal('quickActionsModal'); navigateTo('product', { openNewModal: true })">
+            <span class="d-flex align-items-center gap-3"><i class="bi bi-plus-circle text-violet fs-5"></i> <span class="fw-semibold">Add Product</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex align-items-center justify-content-between border-0 rounded mb-1" onclick="closeModal('quickActionsModal'); navigateTo('purchase_request', { openNewModal: true })">
+            <span class="d-flex align-items-center gap-3"><i class="bi bi-file-earmark-plus text-violet fs-5"></i> <span class="fw-semibold">New Purchase Request</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex align-items-center justify-content-between border-0 rounded mb-1" onclick="closeModal('quickActionsModal'); navigateTo('purchase_order', { openNewModal: true })">
+            <span class="d-flex align-items-center gap-3"><i class="bi bi-cart-plus text-violet fs-5"></i> <span class="fw-semibold">Create Purchase Order</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex align-items-center justify-content-between border-0 rounded mb-1" onclick="closeModal('quickActionsModal'); navigateTo('stock_receiving', { openNewModal: true })">
+            <span class="d-flex align-items-center gap-3"><i class="bi bi-box-arrow-in-down text-violet fs-5"></i> <span class="fw-semibold">Stock Receiving</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action py-3 px-3 d-flex align-items-center justify-content-between border-0 rounded" onclick="closeModal('quickActionsModal'); navigateTo('stock_releasing', { openNewModal: true })">
+            <span class="d-flex align-items-center gap-3"><i class="bi bi-box-arrow-up text-violet fs-5"></i> <span class="fw-semibold">Stock Releasing</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Dashboard: Approved Store Requests Modal -->
+<div class="modal fade" id="whApprovedStoreRequestsModal" tabindex="-1" aria-labelledby="whApprovedStoreRequestsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-box-arrow-up text-violet fs-5"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="whApprovedStoreRequestsModalTitle">Approved Store Requests (Pending Release)</h5>
+          <span class="badge bg-danger rounded-pill px-2 py-0.5" id="whModalPrCountBadge">0</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search, Store Filter, Page Size -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-5">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="whModalPrSearch" placeholder="Search request no, destination store, or requester...">
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="input-group input-group-sm">
+              <label class="input-group-text bg-white text-muted" for="whModalPrStoreFilter">Store</label>
+              <select class="form-select" id="whModalPrStoreFilter">
+                <option value="">All Stores / Branches</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 text-md-end">
+            <div class="input-group input-group-sm ms-auto" style="max-width: 140px;">
+              <label class="input-group-text bg-white text-muted" for="whModalPrPageSize">Show</label>
+              <select class="form-select" id="whModalPrPageSize">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">REQUEST NO.</th>
+                <th>DESTINATION STORE</th>
+                <th>REQUESTED BY</th>
+                <th>ITEMS / QTY</th>
+                <th>APPROVED ON</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="whModalPrTableBody">
+              <tr><td colspan="6" class="text-center py-4 text-muted fst-italic">Loading requests...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center">
+        <div class="small text-muted" id="whModalPrPaginationInfo">Showing 0 to 0 of 0 entries</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="whModalPrPagination"></ul>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Dashboard: Incoming Deliveries Modal -->
+<div class="modal fade" id="whIncomingDeliveriesModal" tabindex="-1" aria-labelledby="whIncomingDeliveriesModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-truck text-violet fs-5"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="whIncomingDeliveriesModalTitle">Incoming Deliveries</h5>
+          <span class="badge bg-primary rounded-pill px-2 py-0.5" id="whModalPoCountBadge">0</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search, Supplier Filter, Page Size -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-5">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="whModalPoSearch" placeholder="Search PO number, supplier...">
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="input-group input-group-sm">
+              <label class="input-group-text bg-white text-muted" for="whModalPoSupplierFilter">Supplier</label>
+              <select class="form-select" id="whModalPoSupplierFilter">
+                <option value="">All Suppliers</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-6 col-md-3 text-md-end">
+            <div class="input-group input-group-sm ms-auto" style="max-width: 140px;">
+              <label class="input-group-text bg-white text-muted" for="whModalPoPageSize">Show</label>
+              <select class="form-select" id="whModalPoPageSize">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">PO NUMBER</th>
+                <th>SUPPLIER</th>
+                <th>EXPECTED ITEMS</th>
+                <th>OUTSTANDING QTY</th>
+                <th>STATUS</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="whModalPoTableBody">
+              <tr><td colspan="6" class="text-center py-4 text-muted fst-italic">Loading deliveries...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center">
+        <div class="small text-muted" id="whModalPoPaginationInfo">Showing 0 to 0 of 0 entries</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="whModalPoPagination"></ul>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Dashboard: Recent Delivery Receipts Modal -->
+<div class="modal fade" id="whDeliveryReceiptsModal" tabindex="-1" aria-labelledby="whDeliveryReceiptsModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-receipt text-violet fs-5"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="whDeliveryReceiptsModalTitle">Recent Delivery Receipts (DR)</h5>
+          <span class="badge bg-success rounded-pill px-2 py-0.5" id="whModalDrCountBadge">0</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search, Page Size -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-8">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="whModalDrSearch" placeholder="Search receiving no, PO no, DR no, or supplier...">
+            </div>
+          </div>
+          <div class="col-12 col-md-4 text-md-end">
+            <div class="input-group input-group-sm ms-auto" style="max-width: 140px;">
+              <label class="input-group-text bg-white text-muted" for="whModalDrPageSize">Show</label>
+              <select class="form-select" id="whModalDrPageSize">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">RECEIVING NO.</th>
+                <th>PO NO.</th>
+                <th>DR NO.</th>
+                <th>SUPPLIER</th>
+                <th class="text-center">UNITS RCVD</th>
+                <th>DATE</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="whModalDrTableBody">
+              <tr><td colspan="7" class="text-center py-4 text-muted fst-italic">Loading delivery receipts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center">
+        <div class="small text-muted" id="whModalDrPaginationInfo">Showing 0 to 0 of 0 entries</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="whModalDrPagination"></ul>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Manager Dashboard: Purchase Requests / Approved Requests Modal -->
+<div class="modal fade" id="mgrPrListModal" tabindex="-1" aria-labelledby="mgrPrModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-check text-primary fs-5" id="mgrPrModalIcon"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0"><span id="mgrPrModalTitle">Approved Requests</span> (<span id="mgrPrModalCountBadge">0</span>)</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search & Date Range Filter -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-7">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="mgrPrModalSearch" placeholder="Search request no., product, or requester...">
+            </div>
+          </div>
+          <div class="col-12 col-md-5 d-flex justify-content-md-end align-items-center gap-2">
+            <!-- Portal Date Range Filter Button -->
+            <div class="gw-date-picker-wrap position-relative">
+              <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 text-nowrap" type="button" id="mgrPrDateRangeBtn" onclick="toggleMgrPrDateRangeDropdown(event)">
+                <i class="bi bi-calendar3"></i>
+                <span id="mgrPrDateRangeBtnText">All Time</span>
+                <i class="bi bi-chevron-down ms-1 small"></i>
+              </button>
+            </div>
+            <!-- Reset Filter Button -->
+            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 text-nowrap" id="mgrPrFilterResetBtn" onclick="resetMgrPrModalFilters()" title="Reset Filters">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">REQUEST NO.</th>
+                <th>REQUESTED BY</th>
+                <th class="text-center">ITEMS</th>
+                <th class="text-center">REQUESTED QTY</th>
+                <th>DATE</th>
+                <th>STATUS</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="mgrPrModalTableBody">
+              <tr><td colspan="7" class="text-center py-4 text-muted fst-italic">Loading requests...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="small text-muted" id="mgrPrModalPaginationInfo">Showing 0 to 0 of 0 records</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="mgrPrModalPagination"></ul>
+          <div class="input-group input-group-sm" style="width: 110px;">
+            <select class="form-select form-select-sm" id="mgrPrModalPageSize">
+              <option value="10" selected>10 / page</option>
+              <option value="25">25 / page</option>
+              <option value="50">50 / page</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-1" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manager Dashboard: POs Awaiting Approval Modal -->
+<div class="modal fade" id="mgrPoApprovalModal" tabindex="-1" aria-labelledby="mgrPoModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-cart-check text-warning fs-5"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0">POs Awaiting Approval (<span id="mgrPoModalCountBadge">0</span>)</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search & Date Range Filter -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-7">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="mgrPoModalSearch" placeholder="Search PO number or supplier...">
+            </div>
+          </div>
+          <div class="col-12 col-md-5 d-flex justify-content-md-end align-items-center gap-2">
+            <!-- Portal Date Range Filter Button -->
+            <div class="gw-date-picker-wrap position-relative">
+              <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 text-nowrap" type="button" id="mgrPoDateRangeBtn" onclick="toggleMgrPoDateRangeDropdown(event)">
+                <i class="bi bi-calendar3"></i>
+                <span id="mgrPoDateRangeBtnText">All Time</span>
+                <i class="bi bi-chevron-down ms-1 small"></i>
+              </button>
+            </div>
+            <!-- Reset Button -->
+            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 text-nowrap" id="mgrPoFilterResetBtn" onclick="resetMgrPoModalFilters()" title="Reset Filters">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">PO NUMBER</th>
+                <th>SUPPLIER</th>
+                <th class="text-center">ITEMS</th>
+                <th>TOTAL COST</th>
+                <th>ORDER DATE</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="mgrPoModalTableBody">
+              <tr><td colspan="6" class="text-center py-4 text-muted fst-italic">Loading purchase orders...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="small text-muted" id="mgrPoModalPaginationInfo">Showing 0 to 0 of 0 records</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="mgrPoModalPagination"></ul>
+          <div class="input-group input-group-sm" style="width: 110px;">
+            <select class="form-select form-select-sm" id="mgrPoModalPageSize">
+              <option value="10" selected>10 / page</option>
+              <option value="25">25 / page</option>
+              <option value="50">50 / page</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-1" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manager Dashboard: Requested vs Available Stock Modal -->
+<div class="modal fade" id="mgrStockComparisonModal" tabindex="-1" aria-labelledby="mgrStockComparisonModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-white py-3 px-3 px-md-4 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-bar-chart-line text-primary fs-5"></i>
+          <h5 class="modal-title fw-bold text-dark fs-5 mb-0" id="mgrStockComparisonModalTitle">Requested vs Available Stock</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3 p-md-4">
+        <!-- Controls: Search & Category / Sort Filter -->
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-7">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border-start-0" id="mgrStockModalSearch" placeholder="Search product name or SKU...">
+            </div>
+          </div>
+          <div class="col-12 col-md-5 d-flex justify-content-md-end">
+            <div class="input-group input-group-sm" style="max-width: 240px;">
+              <select class="form-select form-select-sm" id="mgrStockModalFilter">
+                <option value="top10" selected>Top 10 by Requested Qty</option>
+                <option value="top5">Top 5 by Requested Qty</option>
+                <option value="low">Low Stock Products</option>
+                <option value="critical">Critical Stock Products</option>
+                <option value="all">All Products</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded" style="max-height: 52vh; overflow-y: auto;">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="ps-3">PRODUCT</th>
+                <th class="text-center">REQUESTED QTY</th>
+                <th class="text-center">AVAILABLE STOCK</th>
+                <th class="text-center">MAX STOCK</th>
+                <th class="pe-3">STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="mgrStockModalTableBody">
+              <tr><td colspan="5" class="text-center py-4 text-muted fst-italic">Loading product comparison...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-light py-2 px-3 px-md-4 border-top d-flex justify-content-between align-items-center">
+        <div class="small text-muted" id="mgrStockModalPaginationInfo">Showing 0 to 0 of 0 records</div>
+        <div class="d-flex align-items-center gap-2">
+          <ul class="pagination pagination-sm mb-0" id="mgrStockModalPagination"></ul>
+          <button type="button" class="btn btn-outline-secondary btn-sm px-3 ms-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manager PR Date Range Portal Dropdown Menu -->
+<div class="gw-date-picker-menu shadow-lg border" id="mgrPrDateRangeMenu" style="display:none;position:fixed;z-index:2050;width:340px;">
+  <div class="p-2 border-bottom">
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPrDateOption('all', 'All Time')">All Time</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPrDateOption('today', 'Today')">Today</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPrDateOption('7days', 'Last 7 Days')">Last 7 Days</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPrDateOption('30days', 'Last 30 Days')">Last 30 Days</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPrDateOption('month', 'This Month')">This Month</div>
+  </div>
+  <div class="p-3 bg-light">
+    <div class="small fw-semibold text-muted mb-2">Custom Range</div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <input type="date" class="form-control form-control-sm" id="mgrPrStartDate" placeholder="dd/mm/yyyy">
+      <span class="text-muted small">to</span>
+      <input type="date" class="form-control form-control-sm" id="mgrPrEndDate" placeholder="dd/mm/yyyy">
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button type="button" class="btn btn-sm btn-light border px-3" onclick="closeMgrPrDateRangeDropdown()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-primary px-3" onclick="applyMgrPrCustomDateRange()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manager PO Date Range Portal Dropdown Menu -->
+<div class="gw-date-picker-menu shadow-lg border" id="mgrPoDateRangeMenu" style="display:none;position:fixed;z-index:2050;width:340px;">
+  <div class="p-2 border-bottom">
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPoDateOption('all', 'All Time')">All Time</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPoDateOption('today', 'Today')">Today</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPoDateOption('7days', 'Last 7 Days')">Last 7 Days</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPoDateOption('30days', 'Last 30 Days')">Last 30 Days</div>
+    <div class="dropdown-item py-1.5 px-3 rounded" role="button" onclick="selectMgrPoDateOption('month', 'This Month')">This Month</div>
+  </div>
+  <div class="p-3 bg-light">
+    <div class="small fw-semibold text-muted mb-2">Custom Range</div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <input type="date" class="form-control form-control-sm" id="mgrPoStartDate" placeholder="dd/mm/yyyy">
+      <span class="text-muted small">to</span>
+      <input type="date" class="form-control form-control-sm" id="mgrPoEndDate" placeholder="dd/mm/yyyy">
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button type="button" class="btn btn-sm btn-light border px-3" onclick="closeMgrPoDateRangeDropdown()">Cancel</button>
+      <button type="button" class="btn btn-sm btn-primary px-3" onclick="applyMgrPoCustomDateRange()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Universal modal scrolling fix when forms wrap modal-content or modal-body */
+.modal-dialog-scrollable .modal-content > form,
+.modal-dialog-scrollable form.modal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+.modal-dialog-scrollable .modal-content > form > .modal-body,
+.modal-dialog-scrollable form.modal-content > .modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.modal-open #appShell,
+  body.modal-open #authScreen,
+  header,
+  aside,
+  nav,
+  .navbar,
+  .offcanvas,
+  .toast-container,
+  .modal-backdrop,
+  .modal-header .btn-close,
+  .modal-footer,
+  .btn,
+  .d-print-none {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .modal {
+    display: none !important;
+  }
+
+  .modal.show {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
+
+  .modal.show .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .modal.show .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .modal.show .modal-body {
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  #receiptPrintArea,
+  #inventoryReportPrintArea {
+    border: 1px solid #212529 !important;
+    box-shadow: none !important;
+    border-radius: 4px !important;
+    padding: 24px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  #receiptPrintArea .table,
+  #inventoryReportPrintArea .table {
+    border-color: #333333 !important;
+    color: #000000 !important;
+  }
+
+  #receiptPrintArea .table th,
+  #receiptPrintArea .table td,
+  #inventoryReportPrintArea .table th,
+  #inventoryReportPrintArea .table td {
+    color: #000000 !important;
+    background-color: transparent !important;
+    border-color: #666666 !important;
+  }
+
+  #receiptPrintArea .badge,
+  #inventoryReportPrintArea .badge {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+}
+</style>
+

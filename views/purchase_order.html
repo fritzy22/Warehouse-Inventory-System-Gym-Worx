@@ -1,0 +1,925 @@
+<section class="panel" id="panel-purchase_order" hidden>
+  <!-- PHASE 2: PURCHASING DASHBOARD HEADER & COMPACT TOOLBAR -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="h3 mb-0 fw-bold">Purchase Orders (PO)</h1>
+        <span class="badge bg-light text-secondary border fw-semibold px-2 py-1">Purchasing Officer</span>
+      </div>
+      <p class="text-muted mb-0 small mt-1">Manage purchase orders, track deliveries, and monitor warehouse replenishment.</p>
+    </div>
+
+    <!-- Right Compact Toolbar -->
+    <div class="d-flex align-items-center gap-2" id="poHeaderToolbar">
+      <!-- Calendar: Date Range Filter -->
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 dropdown-toggle px-2.5 py-1.5" type="button" id="poDateRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Date range filter" aria-label="Date range filter">
+          <i class="bi bi-calendar3 text-secondary"></i>
+          <span id="poDateRangeLabel" class="small fw-medium">All Dates</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="poDateRangeDropdown">
+          <li><a class="dropdown-item active" href="javascript:void(0)" onclick="setPoDateRangeFilter('all', 'All Dates')">All Dates</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="setPoDateRangeFilter('today', 'Today')">Today</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="setPoDateRangeFilter('7days', 'Last 7 Days')">Last 7 Days</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="setPoDateRangeFilter('30days', 'Last 30 Days')">Last 30 Days</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="setPoDateRangeFilter('month', 'This Month')">This Month</a></li>
+        </ul>
+      </div>
+
+      <!-- Refresh: Reload Dashboard Records -->
+      <button class="btn btn-outline-secondary btn-sm po-toolbar-btn" type="button" id="btnRefreshPo" onclick="reloadPoModuleData()" title="Reload dashboard records" aria-label="Reload dashboard records">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+
+      <!-- Filter: Open Advanced Filters -->
+      <button class="btn btn-outline-secondary btn-sm po-toolbar-btn" type="button" id="btnFilterPo" data-bs-toggle="modal" data-bs-target="#poFilterModal" title="Open advanced filters" aria-label="Open advanced filters">
+        <i class="bi bi-funnel"></i>
+      </button>
+
+      <!-- Plus (+): Create Purchase Order -->
+      <button class="btn btn-primary btn-sm po-toolbar-btn po-toolbar-btn-primary" type="button" id="btnCreatePoQuick" onclick="openCreatePoWizard()" title="Create Purchase Order" aria-label="Create Purchase Order">
+        <i class="bi bi-plus-lg fw-bold"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- PHASE 3: FIVE CLICKABLE SUMMARY CARDS -->
+  <div class="row g-3 mb-3" id="poSummaryCardsRow">
+    <!-- Card 1: Items to Reorder -->
+    <div class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card po-summary-card shadow-sm h-100 border-0" onclick="openPoItemsToReorderModal()" role="button" tabindex="0" title="Click to view items needing replenishment">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="po-card-icon-box bg-warning-subtle text-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <span class="po-card-chevron text-muted"><i class="bi bi-chevron-right"></i></span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">Items to Reorder</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <h3 class="fw-bold mb-0 text-dark" id="poKpiItemsToReorder">0</h3>
+            <svg class="po-sparkline" width="70" height="24" viewBox="0 0 70 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 2 18 Q 18 20 28 14 T 48 10 T 68 4" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Pending POs -->
+    <div class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card po-summary-card shadow-sm h-100 border-0" onclick="openPoFilteredModal('Pending Approval', 'Pending Purchase Orders')" role="button" tabindex="0" title="Click to view pending POs">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="po-card-icon-box bg-primary-subtle text-primary">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <span class="po-card-chevron text-muted"><i class="bi bi-chevron-right"></i></span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">Pending POs</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <h3 class="fw-bold mb-0 text-dark" id="poKpiPendingPos">0</h3>
+            <svg class="po-sparkline" width="70" height="24" viewBox="0 0 70 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 2 20 Q 20 18 32 16 T 50 14 T 68 6" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Approved POs -->
+    <div class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card po-summary-card shadow-sm h-100 border-0" onclick="openPoFilteredModal('Ordered', 'Approved Purchase Orders')" role="button" tabindex="0" title="Click to view approved POs">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="po-card-icon-box bg-success-subtle text-success">
+              <i class="bi bi-check2-circle"></i>
+            </div>
+            <span class="po-card-chevron text-muted"><i class="bi bi-chevron-right"></i></span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">Approved POs</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <h3 class="fw-bold mb-0 text-dark" id="poKpiApprovedPos">0</h3>
+            <svg class="po-sparkline" width="70" height="24" viewBox="0 0 70 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 2 19 Q 20 22 36 12 T 52 14 T 68 4" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Partially Received -->
+    <div class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card po-summary-card shadow-sm h-100 border-0" onclick="openPoFilteredModal('Partially Received', 'Partially Received Purchase Orders')" role="button" tabindex="0" title="Click to view partially received POs">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="po-card-icon-box bg-info-subtle text-info">
+              <i class="bi bi-box-seam"></i>
+            </div>
+            <span class="po-card-chevron text-muted"><i class="bi bi-chevron-right"></i></span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">Partially Received</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <h3 class="fw-bold mb-0 text-dark" id="poKpiPartialPos">0</h3>
+            <svg class="po-sparkline" width="70" height="24" viewBox="0 0 70 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 2 18 Q 16 16 30 18 T 50 12 T 68 8" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Completed POs -->
+    <div class="col-12 col-sm-6 col-lg-4 col-xl">
+      <div class="card po-summary-card shadow-sm h-100 border-0" onclick="openPoFilteredModal('Received', 'Completed Purchase Orders')" role="button" tabindex="0" title="Click to view completed POs">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="po-card-icon-box" style="background-color: #ede9fe; color: #8b5cf6;">
+              <i class="bi bi-truck"></i>
+            </div>
+            <span class="po-card-chevron text-muted"><i class="bi bi-chevron-right"></i></span>
+          </div>
+          <div class="text-muted small fw-medium mb-1">Completed POs</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <h3 class="fw-bold mb-0 text-dark" id="poKpiCompletedPos">0</h3>
+            <svg class="po-sparkline" width="70" height="24" viewBox="0 0 70 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 2 20 Q 20 20 34 14 T 52 14 T 68 6" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4, 5, 6: MIDDLE 3-COLUMN ANALYTICS & REPLENISHMENT ROW -->
+  <div class="row g-3 mb-3">
+    <!-- Col 1: Replenishment Needed (Low Stock) -->
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm h-100 border-0 po-panel-card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2.5 px-3 border-bottom">
+          <div class="d-flex align-items-center gap-2">
+            <div class="po-card-icon-mini text-warning bg-warning-subtle">
+              <i class="bi bi-inbox"></i>
+            </div>
+            <span class="fw-bold small text-dark">Replenishment Needed (Low Stock)</span>
+            <span class="badge rounded-pill bg-warning text-dark px-2" id="badgeReplenishMiniCount">0</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-link text-muted p-0 po-link-chevron" onclick="openPoItemsToReorderModal()" title="View full replenishment table" aria-label="View full replenishment table">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        <div class="table-responsive" style="max-height: 290px; overflow-y: auto;">
+          <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+            <thead class="table-light text-secondary small">
+              <tr>
+                <th class="ps-3" style="width: 38%;">PRODUCT</th>
+                <th class="text-center" style="width: 18%;">CURRENT STOCK</th>
+                <th class="text-center" style="width: 18%;">REORDER LEVEL</th>
+                <th class="text-center" style="width: 16%;">SUGGESTED QTY</th>
+                <th class="text-end pe-3" style="width: 10%;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="poReplenishmentMiniRows">
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4 small">
+                  <div class="spinner-border spinner-border-sm me-1 text-primary"></div> Loading inventory...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 2: Purchase Order Status (Donut Chart) -->
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="card shadow-sm h-100 border-0 po-panel-card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2.5 px-3 border-bottom">
+          <span class="fw-bold small text-dark">Purchase Order Status</span>
+          <button type="button" class="btn btn-sm btn-link text-muted p-0 po-link-chevron" onclick="openPoFilteredModal('all', 'All Purchase Orders')" title="View all purchase orders" aria-label="View all purchase orders">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        <div class="card-body p-3 d-flex align-items-center justify-content-center">
+          <div class="row align-items-center w-100 g-2">
+            <!-- Donut SVG -->
+            <div class="col-7 position-relative text-center d-flex justify-content-center align-items-center">
+              <svg width="170" height="170" viewBox="0 0 170 170" id="poDonutChartSvg">
+                <!-- Dynamically rendered donut paths -->
+              </svg>
+              <div class="po-donut-center-label text-center position-absolute">
+                <div class="fw-bold fs-3 text-dark lh-1" id="poDonutCenterCount">0</div>
+                <div class="text-muted" style="font-size: 11px;">Total POs</div>
+              </div>
+            </div>
+            <!-- Donut Legend -->
+            <div class="col-5 ps-1">
+              <div class="d-flex flex-column gap-2" id="poDonutLegendList">
+                <div class="d-flex align-items-center justify-content-between small po-legend-row" onclick="openPoFilteredModal('Pending Approval', 'Pending Purchase Orders')" role="button" title="View Pending POs">
+                  <span class="d-flex align-items-center gap-1.5"><span class="po-legend-dot" style="background-color: #f59e0b;"></span>Pending</span>
+                  <strong class="text-dark" id="poLegendCountPending">0</strong>
+                </div>
+                <div class="d-flex align-items-center justify-content-between small po-legend-row" onclick="openPoFilteredModal('Ordered', 'Approved Purchase Orders')" role="button" title="View Approved POs">
+                  <span class="d-flex align-items-center gap-1.5"><span class="po-legend-dot" style="background-color: #10b981;"></span>Approved</span>
+                  <strong class="text-dark" id="poLegendCountApproved">0</strong>
+                </div>
+                <div class="d-flex align-items-center justify-content-between small po-legend-row" onclick="openPoFilteredModal('Partially Received', 'Partially Received POs')" role="button" title="View Partially Received POs">
+                  <span class="d-flex align-items-center gap-1.5"><span class="po-legend-dot" style="background-color: #06b6d4;"></span>Partially Received</span>
+                  <strong class="text-dark" id="poLegendCountPartial">0</strong>
+                </div>
+                <div class="d-flex align-items-center justify-content-between small po-legend-row" onclick="openPoFilteredModal('Received', 'Completed Purchase Orders')" role="button" title="View Completed POs">
+                  <span class="d-flex align-items-center gap-1.5"><span class="po-legend-dot" style="background-color: #8b5cf6;"></span>Completed</span>
+                  <strong class="text-dark" id="poLegendCountCompleted">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 3: Recent Purchasing Activity -->
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card shadow-sm h-100 border-0 po-panel-card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2.5 px-3 border-bottom">
+          <span class="fw-bold small text-dark">Recent Activity</span>
+          <button type="button" class="btn btn-sm btn-link text-muted p-0 po-link-chevron" onclick="openPoFilteredModal('all', 'All Activity Log')" title="View recent activity" aria-label="View recent activity">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        <div class="card-body p-2.5 overflow-auto" style="max-height: 290px;">
+          <div class="d-flex flex-column gap-2" id="poRecentActivityTimeline">
+            <!-- Timeline items rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 7 & 8: BOTTOM 2-COLUMN SECTION -->
+  <div class="row g-3 mb-4">
+    <!-- Col 1 (~58% width on desktop): Pending Purchase Orders -->
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm h-100 border-0 po-panel-card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2.5 px-3 border-bottom">
+          <div class="d-flex align-items-center gap-2">
+            <div class="po-card-icon-mini text-danger bg-danger-subtle">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <span class="fw-bold small text-dark">Pending Purchase Orders</span>
+            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-2" id="badgePendingPosMiniCount">0</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-link text-muted p-0 po-link-chevron" onclick="openPoFilteredModal('Pending Approval', 'Pending Purchase Orders')" title="View all pending POs" aria-label="View all pending POs">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        <div class="table-responsive" style="max-height: 310px; overflow-y: auto;">
+          <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+            <thead class="table-light text-secondary small">
+              <tr>
+                <th class="ps-3">PO NO.</th>
+                <th>SUPPLIER</th>
+                <th class="text-center">ITEMS</th>
+                <th class="text-end">TOTAL COST</th>
+                <th>CREATED DATE</th>
+                <th class="text-center">STATUS</th>
+                <th class="text-end pe-3">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="poPendingTableRows">
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4 small">
+                  <div class="spinner-border spinner-border-sm me-1 text-primary"></div> Loading pending POs...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 2 (~42% width on desktop): Expected Deliveries -->
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm h-100 border-0 po-panel-card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2.5 px-3 border-bottom">
+          <div class="d-flex align-items-center gap-2">
+            <div class="po-card-icon-mini text-primary bg-primary-subtle">
+              <i class="bi bi-box-seam"></i>
+            </div>
+            <span class="fw-bold small text-dark">Expected Deliveries</span>
+            <span class="badge rounded-pill bg-primary-subtle text-primary px-2" id="badgeDeliveriesMiniCount">0</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-link text-muted p-0 po-link-chevron" onclick="openPoFilteredModal('In Transit', 'Expected Deliveries')" title="View all expected deliveries" aria-label="View all expected deliveries">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        <div class="table-responsive" style="max-height: 310px; overflow-y: auto;">
+          <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+            <thead class="table-light text-secondary small">
+              <tr>
+                <th class="ps-3">PO NO.</th>
+                <th>SUPPLIER</th>
+                <th class="text-center">ITEMS</th>
+                <th>ETA</th>
+                <th class="text-center">STATUS</th>
+                <th class="text-end pe-3">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="poDeliveriesTableRows">
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4 small">
+                  <div class="spinner-border spinner-border-sm me-1 text-primary"></div> Loading deliveries...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- PHASE 9: CREATE PURCHASE ORDER MODAL (3-STEP WIZARD) -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poModal" tabindex="-1" aria-labelledby="poModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content border-0 shadow-lg">
+      <form id="poWizardForm" onsubmit="handlePoWizardSubmit(event)">
+        <!-- Modal Header with Stepper -->
+        <div class="modal-header border-bottom py-3 px-4 d-flex flex-column align-items-start gap-2">
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <h5 class="modal-title fw-bold mb-0 text-dark" id="poModalTitle">Create Purchase Order</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <!-- 3-Step Wizard Navigation -->
+          <div class="po-wizard-stepper d-flex align-items-center justify-content-center gap-3 w-100 pt-2">
+            <div class="po-wizard-step active" id="poWStep1" onclick="goToPoWizardStep(1)">
+              <span class="po-step-num">1</span>
+              <span class="po-step-name">Select Items</span>
+            </div>
+            <div class="po-step-connector"></div>
+            <div class="po-wizard-step" id="poWStep2" onclick="goToPoWizardStep(2)">
+              <span class="po-step-num">2</span>
+              <span class="po-step-name">Supplier &amp; Pricing</span>
+            </div>
+            <div class="po-step-connector"></div>
+            <div class="po-wizard-step" id="poWStep3" onclick="goToPoWizardStep(3)">
+              <span class="po-step-num">3</span>
+              <span class="po-step-name">Review &amp; Submit</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Mode Switcher: Independent PO vs Linked to Approved PR -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2.5 mb-3 rounded-3 bg-light border">
+            <div class="small fw-semibold text-secondary">
+              <i class="bi bi-shield-check me-1 text-primary"></i>Purchase Order Mode:
+            </div>
+            <div class="btn-group btn-group-sm" role="group" aria-label="PO Source Mode">
+              <input type="radio" class="btn-check" name="po_wizard_mode" id="poWModeIndependent" value="Independent" checked onchange="switchPoWizardMode('Independent')">
+              <label class="btn btn-outline-dark px-3" for="poWModeIndependent">
+                <i class="bi bi-box-seam me-1"></i>Independent PO
+              </label>
+              <input type="radio" class="btn-check" name="po_wizard_mode" id="poWModePrLinked" value="PR-Linked" onchange="switchPoWizardMode('PR-Linked')">
+              <label class="btn btn-outline-primary px-3" for="poWModePrLinked">
+                <i class="bi bi-link-45deg me-1"></i>From Approved PR
+              </label>
+            </div>
+          </div>
+
+          <!-- PR Selection Row (Visible only in PR-Linked mode) -->
+          <div class="card p-3 mb-3 border-primary-subtle bg-primary-subtle bg-opacity-10 rounded-3" id="poWPrSelectRow" hidden>
+            <div class="row g-2 align-items-center">
+              <div class="col-12 col-md-5">
+                <label class="form-label small fw-semibold text-dark mb-1" for="poWPrSelect">
+                  Approved Purchase Request <span class="text-danger">*</span>
+                </label>
+                <select class="form-select form-select-sm" id="poWPrSelect" onchange="handlePoWPrSelectChange()">
+                  <option value="">-- Select Approved PR --</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-7">
+                <div class="small text-muted" id="poWPrSummaryInfo">Select an approved PR to automatically load shortage items.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 1 CONTENT: SELECT ITEMS -->
+          <div id="poWizardStep1Content">
+            <!-- Search & Filter Controls -->
+            <div class="row g-2 mb-3 align-items-center">
+              <div class="col-12 col-md-7">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                  <input type="search" class="form-control border-start-0" id="poWItemSearchInput" placeholder="Search product name or SKU..." oninput="handlePoWItemFilter()">
+                </div>
+              </div>
+              <div class="col-12 col-md-5 d-flex gap-2">
+                <select class="form-select form-select-sm" id="poWCategoryFilter" onchange="handlePoWItemFilter()">
+                  <option value="all">All Categories</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onclick="clearPoWItemFilters()" title="Reset search">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Products Table for Step 1 -->
+            <div class="table-responsive border rounded-3 mb-3" style="max-height: 320px; overflow-y: auto;">
+              <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+                <thead class="table-light text-secondary small">
+                  <tr>
+                    <th class="ps-3" style="width: 35%;">PRODUCT</th>
+                    <th style="width: 20%;">CATEGORY</th>
+                    <th class="text-center" style="width: 12%;">STOCK</th>
+                    <th class="text-center" style="width: 10%;">UNIT</th>
+                    <th class="text-center" style="width: 15%;">QTY</th>
+                    <th class="text-end pe-3" style="width: 8%;">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody id="poWProductCatalogRows">
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Selected Items Tray -->
+            <div class="card bg-light border-0 p-3 rounded-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small fw-bold text-dark">
+                  <i class="bi bi-cart-check text-primary me-1"></i>Selected Order Items (<span id="poWSelectedItemsCount">0</span>)
+                </span>
+                <span class="small fw-bold text-primary" id="poWStep1RunningTotal">PHP 0.00</span>
+              </div>
+              <div id="poWSelectedItemsBadges" class="d-flex flex-wrap gap-1.5">
+                <span class="text-muted small">No items added yet. Click the cart icon beside any product above.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2 CONTENT: SUPPLIER & PRICING -->
+          <div id="poWizardStep2Content" hidden>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold text-dark mb-1" for="poWSupplierSelect">
+                  Supplier <span class="text-danger">*</span>
+                </label>
+                <select class="form-select form-select-sm" id="poWSupplierSelect" required onchange="handlePoWSupplierChange()">
+                  <option value="">-- Select Active Supplier --</option>
+                </select>
+                <div class="form-text small" id="poWSupplierHint">Selecting a supplier updates prices to supplier-contracted rates.</div>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold text-dark mb-1" for="poWOrderDate">
+                  Order Date <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control form-control-sm" id="poWOrderDate" required>
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold text-dark mb-1" for="poWExpectedDate">
+                  Expected Delivery (ETA)
+                </label>
+                <input type="date" class="form-control form-control-sm" id="poWExpectedDate">
+              </div>
+            </div>
+
+            <!-- Step 2 Order Lines Table -->
+            <div class="table-responsive border rounded-3 mb-3">
+              <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+                <thead class="table-light text-secondary small">
+                  <tr>
+                    <th class="ps-3" style="width: 35%;">PRODUCT</th>
+                    <th class="text-center" style="width: 15%;">QTY</th>
+                    <th class="text-end" style="width: 22%;">UNIT COST (PHP)</th>
+                    <th class="text-end" style="width: 20%;">LINE TOTAL (PHP)</th>
+                    <th class="text-end pe-3" style="width: 8%;"></th>
+                  </tr>
+                </thead>
+                <tbody id="poWStep2OrderLines">
+                  <!-- Rendered dynamically -->
+                </tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <th colspan="3" class="text-end fw-semibold small">Grand Total:</th>
+                    <th class="text-end fw-bold font-monospace text-primary" id="poWStep2GrandTotal">PHP 0.00</th>
+                    <th></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Instructions / Notes -->
+            <div class="mb-2">
+              <label class="form-label small fw-semibold text-dark mb-1" for="poWNotes">Purchasing Remarks / Delivery Instructions</label>
+              <input type="text" class="form-control form-control-sm" id="poWNotes" maxlength="500" placeholder="Optional delivery instructions, dock requirements, or supplier notes...">
+            </div>
+          </div>
+
+          <!-- STEP 3 CONTENT: REVIEW & SUBMIT -->
+          <div id="poWizardStep3Content" hidden>
+            <div class="card p-3 mb-3 border-0 bg-light rounded-3">
+              <div class="row g-3">
+                <div class="col-6 col-md-3">
+                  <span class="text-muted small d-block">Supplier</span>
+                  <strong class="text-dark" id="poWRevSupplier">—</strong>
+                </div>
+                <div class="col-6 col-md-3">
+                  <span class="text-muted small d-block">PO Mode</span>
+                  <span class="badge bg-secondary" id="poWRevMode">Independent</span>
+                </div>
+                <div class="col-6 col-md-3">
+                  <span class="text-muted small d-block">Order Date</span>
+                  <strong class="text-dark" id="poWRevOrderDate">—</strong>
+                </div>
+                <div class="col-6 col-md-3">
+                  <span class="text-muted small d-block">Expected Delivery</span>
+                  <strong class="text-dark" id="poWRevExpectedDate">Not specified</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review Items Table -->
+            <div class="table-responsive border rounded-3 mb-3">
+              <table class="table table-sm align-middle mb-0 po-table-compact">
+                <thead class="table-light text-secondary small">
+                  <tr>
+                    <th class="ps-3">PRODUCT</th>
+                    <th class="text-center">ORDERED QTY</th>
+                    <th class="text-end">UNIT COST</th>
+                    <th class="text-end pe-3">SUBTOTAL</th>
+                  </tr>
+                </thead>
+                <tbody id="poWRevItemsTableBody"></tbody>
+                <tfoot class="table-light">
+                  <tr>
+                    <th colspan="3" class="text-end fw-semibold">Grand Total PO Amount:</th>
+                    <th class="text-end fw-bold font-monospace text-primary pe-3 fs-6" id="poWRevTotalAmount">PHP 0.00</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-0">
+              <i class="bi bi-info-circle-fill fs-5 text-primary"></i>
+              <div>
+                <strong>Submission Confirmation:</strong> Submitting will record this Purchase Order in the warehouse database. It will immediately appear in your Pending POs table and be routed for Manager review.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wizard Navigation Footer -->
+        <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPoWizardBack" onclick="handlePoWizardBack()" style="visibility: hidden;">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm px-3" id="btnPoWizardNext" onclick="handlePoWizardNext()">
+              Next: Supplier &amp; Pricing <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            <button type="submit" class="btn btn-success btn-sm px-3" id="btnPoWizardSubmit" hidden>
+              <i class="bi bi-check2-circle me-1"></i>Submit Purchase Order
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- PHASE 10: PURCHASE ORDER DETAILS MODAL (WITH ITEMS & ACTIVITY LOG TABS) -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poDetailModal" tabindex="-1" aria-labelledby="poDetailTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div>
+            <h5 class="modal-title fw-bold mb-0 text-dark" id="poDetailModalTitle">Purchase Order Details</h5>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <span class="fs-5 fw-bold text-dark font-monospace" id="poDetailCode">PO-00000</span>
+              <span id="poDetailStatusBadge">—</span>
+            </div>
+          </div>
+        </div>
+        <!-- Icon-only actions in modal header: Edit, Print, More Options -->
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm po-modal-action-btn" id="btnPoDetailEdit" onclick="handlePoDetailEdit()" title="Edit Purchase Order" aria-label="Edit Purchase Order">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm po-modal-action-btn" id="btnPoDetailPrint" onclick="handlePoDetailPrint()" title="Print Purchase Order" aria-label="Print Purchase Order">
+            <i class="bi bi-printer"></i>
+          </button>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm po-modal-action-btn" type="button" id="poDetailMoreDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="More options" aria-label="More options">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="poDetailMoreDropdown">
+              <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="handlePoDetailCancel()"><i class="bi bi-x-circle me-2"></i>Cancel Purchase Order</a></li>
+            </ul>
+          </div>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Key Metrics Bar -->
+        <div class="card p-3 mb-3 border-0 bg-light rounded-3">
+          <div class="row g-3 text-center text-sm-start">
+            <div class="col-6 col-md">
+              <span class="text-muted small d-block">Supplier</span>
+              <strong class="text-dark" id="poDetailSupplier">—</strong>
+            </div>
+            <div class="col-6 col-md">
+              <span class="text-muted small d-block">Total Items</span>
+              <strong class="text-dark" id="poDetailTotalItems">0</strong>
+            </div>
+            <div class="col-6 col-md">
+              <span class="text-muted small d-block">Total Cost</span>
+              <strong class="text-primary font-monospace" id="poDetailTotalCost">PHP 0.00</strong>
+            </div>
+            <div class="col-6 col-md">
+              <span class="text-muted small d-block">Created Date</span>
+              <strong class="text-dark" id="poDetailCreatedDate">—</strong>
+            </div>
+            <div class="col-6 col-md">
+              <span class="text-muted small d-block">Expected Delivery</span>
+              <strong class="text-dark" id="poDetailExpectedDelivery">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Tabs: Items & Activity Log -->
+        <ul class="nav nav-tabs mb-3" id="poDetailTabNav" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold small" id="poTabItems-tab" data-bs-toggle="tab" data-bs-target="#poTabItemsPane" type="button" role="tab" aria-selected="true">
+              Items (<span id="poDetailItemsTabCount">0</span>)
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold small" id="poTabActivity-tab" data-bs-toggle="tab" data-bs-target="#poTabActivityPane" type="button" role="tab" aria-selected="false">
+              Activity Log (<span id="poDetailActivityTabCount">0</span>)
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="poDetailTabContent">
+          <!-- Items Tab Pane -->
+          <div class="tab-pane fade show active" id="poTabItemsPane" role="tabpanel">
+            <div class="table-responsive border rounded-3 mb-2">
+              <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+                <thead class="table-light text-secondary small">
+                  <tr>
+                    <th class="ps-3" style="width: 40%;">PRODUCT</th>
+                    <th class="text-center" style="width: 12%;">QTY</th>
+                    <th class="text-end" style="width: 18%;">UNIT COST</th>
+                    <th class="text-end" style="width: 18%;">TOTAL COST</th>
+                    <th class="text-center" style="width: 12%;">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody id="poDetailItemsRows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Activity Log Tab Pane -->
+          <div class="tab-pane fade" id="poTabActivityPane" role="tabpanel">
+            <div class="p-3 border rounded-3 bg-white" style="max-height: 350px; overflow-y: auto;">
+              <div class="d-flex flex-column gap-3" id="poDetailActivityTimeline">
+                <!-- Activity timeline entries -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- PHASE 4: FULL REPLENISHMENT NEEDED MODAL (ITEMS TO REORDER) -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poReplenishmentModal" tabindex="-1" aria-labelledby="poReplenishmentModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="po-card-icon-mini text-warning bg-warning-subtle">
+            <i class="bi bi-inbox"></i>
+          </div>
+          <h5 class="modal-title fw-bold mb-0 text-dark" id="poReplenishmentModalTitle">Warehouse Products Needing Replenishment</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Search & Filter Controls -->
+        <div class="row g-2 mb-3">
+          <div class="col-12 col-md-7">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+              <input type="search" class="form-control" id="poReplenishModalSearch" placeholder="Search by product name, ID, or supplier..." oninput="handlePoReplenishModalFilter()">
+            </div>
+          </div>
+          <div class="col-12 col-md-5">
+            <select class="form-select form-select-sm" id="poReplenishModalCategoryFilter" onchange="handlePoReplenishModalFilter()">
+              <option value="all">All Product Categories</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Full Replenishment Table -->
+        <div class="table-responsive border rounded-3">
+          <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+            <thead class="table-light text-secondary small">
+              <tr>
+                <th class="ps-3">PRODUCT</th>
+                <th class="text-center">UNIT</th>
+                <th class="text-center">MAX STOCK</th>
+                <th class="text-center">AVAILABLE</th>
+                <th class="text-center">REORDER LEVEL</th>
+                <th class="text-center">OUTSTANDING PO</th>
+                <th class="text-center">SUGGESTED QTY</th>
+                <th>PREFERRED SUPPLIER</th>
+                <th class="text-end">UNIT COST</th>
+                <th class="text-end pe-3">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="poReplenishModalTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-between align-items-center">
+        <span class="small text-muted" id="poReplenishModalCountInfo">Showing 0 products</span>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- PHASE 3 & 7: FILTERED PURCHASE ORDERS MODAL -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poFilteredListModal" tabindex="-1" aria-labelledby="poFilteredListModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <div class="po-card-icon-mini text-primary bg-primary-subtle" id="poFilteredModalIconBox">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <h5 class="modal-title fw-bold mb-0 text-dark" id="poFilteredListModalTitle">Purchase Orders</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Search & Filter Controls -->
+        <div class="row g-2 mb-3">
+          <div class="col-12 col-md-6">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+              <input type="search" class="form-control" id="poFilteredModalSearch" placeholder="Search PO #, supplier, or notes..." oninput="handlePoFilteredModalFilter()">
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm" id="poFilteredModalStatusFilter" onchange="handlePoFilteredModalFilter()">
+              <option value="all">All Statuses</option>
+              <option value="Pending Approval">Pending Approval</option>
+              <option value="Ordered">Approved / Ordered</option>
+              <option value="Partially Received">Partially Received</option>
+              <option value="Received">Completed / Received</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm" id="poFilteredModalSupplierFilter" onchange="handlePoFilteredModalFilter()">
+              <option value="all">All Suppliers</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive border rounded-3">
+          <table class="table table-hover table-sm align-middle mb-0 po-table-compact">
+            <thead class="table-light text-secondary small">
+              <tr>
+                <th class="ps-3">PO NO.</th>
+                <th>SUPPLIER</th>
+                <th class="text-center">ITEMS</th>
+                <th class="text-end">TOTAL COST</th>
+                <th>CREATED DATE</th>
+                <th>EXPECTED DATE</th>
+                <th class="text-center">STATUS</th>
+                <th class="text-end pe-3">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="poFilteredModalTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-between align-items-center">
+        <span class="small text-muted" id="poFilteredModalPaginationInfo">Showing 0 orders</span>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- PHASE 8: DELIVERY TRACKING MODAL -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poDeliveryTrackingModal" tabindex="-1" aria-labelledby="poDeliveryTrackingModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom py-3 px-4">
+        <div class="d-flex align-items-center gap-2">
+          <div class="po-card-icon-mini text-primary bg-primary-subtle">
+            <i class="bi bi-truck"></i>
+          </div>
+          <h5 class="modal-title fw-bold mb-0 text-dark" id="poDeliveryTrackingModalTitle">Delivery Tracking</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="card p-3 mb-3 border-0 bg-light rounded-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fs-5 fw-bold font-monospace text-dark" id="trackPoCode">PO-00000</span>
+            <span class="badge bg-primary" id="trackPoStatus">In Transit</span>
+          </div>
+          <div class="small text-muted mb-1">Supplier: <strong class="text-dark" id="trackPoSupplier">—</strong></div>
+          <div class="small text-muted">Estimated Delivery Date (ETA): <strong class="text-dark" id="trackPoEta">—</strong></div>
+        </div>
+
+        <h6 class="fw-bold small text-dark mb-2">Fulfillment Milestones</h6>
+        <div class="po-tracking-milestones d-flex flex-column gap-3 mb-3" id="trackPoMilestones">
+          <!-- Dynamically populated milestones -->
+        </div>
+
+        <div class="alert alert-light border py-2 px-3 small text-muted mb-0">
+          <i class="bi bi-shield-check text-success me-1"></i>
+          <strong>Warehouse Role Reminder:</strong> Delivery verification and stock receiving is posted by Warehouse Officers upon arrival.
+        </div>
+      </div>
+      <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- ADVANCED FILTER MODAL -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="poFilterModal" tabindex="-1" aria-labelledby="poFilterModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom py-3 px-4">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-funnel text-primary fs-5"></i>
+          <h5 class="modal-title fw-bold mb-0 text-dark" id="poFilterModalTitle">Filter Purchase Orders</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-dark mb-1" for="advFilterSupplier">Supplier</label>
+          <select class="form-select form-select-sm" id="advFilterSupplier">
+            <option value="all">All Suppliers</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-dark mb-1" for="advFilterStatus">Status</label>
+          <select class="form-select form-select-sm" id="advFilterStatus">
+            <option value="all">All Statuses</option>
+            <option value="Pending Approval">Pending Approval</option>
+            <option value="Ordered">Approved / Ordered</option>
+            <option value="Partially Received">Partially Received</option>
+            <option value="Received">Completed / Received</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-dark mb-1" for="advFilterStartDate">From Date</label>
+            <input type="date" class="form-control form-control-sm" id="advFilterStartDate">
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-dark mb-1" for="advFilterEndDate">To Date</label>
+            <input type="date" class="form-control form-control-sm" id="advFilterEndDate">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetPoAdvancedFilters()">Reset</button>
+        <button type="button" class="btn btn-primary btn-sm px-3" onclick="applyPoAdvancedFilters()">Apply Filters</button>
+      </div>
+    </div>
+  </div>
+</div>

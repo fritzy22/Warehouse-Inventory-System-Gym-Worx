@@ -1,0 +1,323 @@
+<section class="panel" id="panel-stock_receiving" hidden>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-2 mb-3">
+    <div>
+      <h1 class="h3 mb-1">Warehouse Receiving &amp; Goods Inspection</h1>
+      <p class="text-muted mb-0 small">Receive authorized deliveries under Goods Receipt Notes (GRN), conduct quality inspections, isolate rejected/quarantined goods, and post accepted stock to inventory.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+      <button class="btn btn-dark btn-sm flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#receivingModal" data-module="stock_receiving">
+        <i class="bi bi-box-arrow-in-down me-1"></i>Receive Delivery (New GRN)
+      </button>
+    </div>
+  </div>
+
+  <div id="receivingSuccessAlert" class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3" role="alert" hidden>
+    <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
+    <div id="receivingSuccessMsg">Stock received successfully.</div>
+    <button type="button" class="btn-close ms-auto" aria-label="Close" onclick="this.closest('.alert').hidden = true"></button>
+  </div>
+
+  <!-- Incoming Deliveries Queue (POs Awaiting Receiving or Partially Received) -->
+  <div class="card gym-table-container border-info border-opacity-50 mb-3" id="incomingDeliveriesCard" hidden>
+    <div class="card-header bg-transparent py-2 px-3 d-flex justify-content-between align-items-center">
+      <div class="fw-bold small text-dark">
+        <i class="bi bi-truck me-1 text-primary"></i>Warehouse Receiving Queue (Authorized &amp; Issued POs)
+      </div>
+      <span class="badge bg-primary" id="incomingDeliveriesCount">0 Open</span>
+    </div>
+    <!-- Desktop Table View -->
+    <div class="table-responsive gym-table-scroll">
+      <table class="table gym-table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>PO Number</th>
+            <th>PR Ref</th>
+            <th>Supplier</th>
+            <th>Order Date</th>
+            <th>Received / Ordered</th>
+            <th>Outstanding Qty</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody id="incomingDeliveriesTable"></tbody>
+      </table>
+    </div>
+    <!-- Mobile Card View -->
+    <div class="d-md-none p-2 p-sm-3" id="incomingDeliveriesMobileList"></div>
+  </div>
+
+  <!-- Goods Receipt Notes & Inspection Records -->
+  <div class="card gym-table-container" id="receivingMainCard">
+    <div class="card-header bg-transparent py-2 px-3 d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 fw-bold small text-uppercase text-muted">Goods Receipt Notes (GRN) &amp; Inspection Ledger</h6>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-secondary active" id="grnFilterAll" onclick="filterGrnList('all')">All GRNs</button>
+        <button type="button" class="btn btn-outline-warning" id="grnFilterPending" onclick="filterGrnList('pending_inspection')">Pending Inspection</button>
+      </div>
+    </div>
+    <!-- Desktop Table View -->
+    <div class="table-responsive gym-table-scroll">
+      <table class="table gym-table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>GRN No.</th>
+            <th>PO No.</th>
+            <th>Supplier DR No.</th>
+            <th>Supplier</th>
+            <th>Date &amp; Receiver</th>
+            <th class="text-center">Delivered</th>
+            <th class="text-center">Accepted</th>
+            <th class="text-center">Rejected / Quar.</th>
+            <th class="text-center">Inspection Status</th>
+            <th class="text-end text-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="receivingTable"></tbody>
+      </table>
+    </div>
+    <!-- Mobile Card View -->
+    <div class="d-md-none p-2 p-sm-3" id="receivingMobileList">
+      <div class="text-center text-muted py-4 fst-italic">Loading receiving records...</div>
+    </div>
+  </div>
+</section>
+
+<!-- Record Stock Receiving Modal (Workflow A: Creates GRN) -->
+<div class="modal fade" id="receivingModal" tabindex="-1" aria-labelledby="receivingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <form id="receivingForm">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold" id="receivingModalLabel">
+            <i class="bi bi-box-arrow-in-down text-warning me-2"></i>Receive Delivery &amp; Create Goods Receipt Note (GRN)
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="receiving_client_token">
+          
+          <div class="alert alert-info py-2 small mb-3 d-flex align-items-center">
+            <i class="bi bi-info-circle-fill me-2 fs-5 flex-shrink-0"></i>
+            <div>
+              <strong>Warehouse Receiving Policy:</strong> Recording a delivery generates a Goods Receipt Note (GRN) and submits goods for inspection. Usable inventory will <strong>not</strong> increase until items are formally inspected and accepted.
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="receiving_po_id">Purchase Order <span class="text-danger">*</span></label>
+              <select class="form-select" id="receiving_po_id" required></select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label fw-semibold" for="receiving_dr_number">Supplier DR Number <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="receiving_dr_number" placeholder="Enter Delivery Receipt number" required>
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label fw-semibold" for="receiving_date">Delivery Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="receiving_date" required>
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold" for="receiving_user_id">Verified &amp; Received By</label>
+              <select class="form-select" id="receiving_user_id" required></select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold" for="receiving_remarks">Delivery Remarks / Driver Observations</label>
+            <input type="text" class="form-control form-control-sm" id="receiving_remarks" placeholder="Enter delivery remarks, package condition, driver info">
+          </div>
+
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-2">
+            <p class="text-muted small mb-0">
+              <i class="bi bi-pencil-square me-1"></i>Enter the actual delivered quantity for each item. Over-receiving is prevented by policy.
+            </p>
+            <div class="btn-group btn-group-sm flex-shrink-0">
+              <button type="button" class="btn btn-outline-primary" onclick="fillReceivingQuantities('full')">Receive All Outstanding</button>
+              <button type="button" class="btn btn-outline-secondary" onclick="fillReceivingQuantities('zero')">Clear All (0)</button>
+            </div>
+          </div>
+
+          <div class="table-responsive gym-table-scroll mb-3">
+            <table class="table gym-table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Product</th>
+                  <th class="text-center">Ordered</th>
+                  <th class="text-center">Prev. Received</th>
+                  <th class="text-center">Outstanding Due</th>
+                  <th style="width:140px;" class="text-center">Delivered Now</th>
+                  <th class="text-center">Remaining Outstanding</th>
+                  <th style="width:240px;">Delivery Notes / Discrepancy</th>
+                </tr>
+              </thead>
+              <tbody id="receiving_items_table">
+                <tr><td colspan="7" class="text-muted fst-italic text-center py-3">Select a purchase order first.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Immediate Inspection Shortcut Option -->
+          <div class="form-check form-switch mb-3 p-2 bg-light rounded border">
+            <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="receiving_auto_inspect">
+            <label class="form-check-label fw-semibold small" for="receiving_auto_inspect">
+              <i class="bi bi-shield-check text-success me-1"></i>Inspect and accept delivered goods immediately (posts directly to usable stock)
+            </label>
+            <div class="small text-muted ms-4">Leave unchecked to save GRN as <em>Pending Inspection</em> for separate two-stage inspection.</div>
+          </div>
+
+          <!-- Live Receiving Outcome Summary -->
+          <div class="p-3 rounded border bg-light d-flex flex-wrap justify-content-between align-items-center gap-2" id="receivingLiveSummary">
+            <div class="small">
+              <span class="me-3"><strong>Delivering Now:</strong> <span class="font-monospace fw-bold text-success" id="rcvSumNow">0</span> units</span>
+              <span><strong>Remaining on PO:</strong> <span class="font-monospace fw-bold text-primary" id="rcvSumRemaining">0</span> units</span>
+            </div>
+            <div>
+              <span class="small text-muted me-1">Resulting PO Status:</span>
+              <span class="badge bg-secondary" id="rcvSumResultStatus">Select PO</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-danger btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-dark"><i class="bi bi-file-earmark-check me-1"></i>Issue Goods Receipt Note (GRN)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Goods Inspection Modal (Workflow B: Inspects Delivered Items & Posts to Inventory) -->
+<div class="modal fade" id="inspectionModal" tabindex="-1" aria-labelledby="inspectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <form id="inspectionForm" onsubmit="submitGoodsInspection(event)">
+        <input type="hidden" id="insp_receiving_id">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold" id="inspectionModalLabel">
+            <i class="bi bi-shield-check text-warning me-2"></i>Inspect Delivered Goods &amp; Post Stock
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2 p-3 bg-light rounded border mb-3" id="inspectionMetaCard"></div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold" for="insp_date">Inspection Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="insp_date" required>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label fw-semibold" for="insp_notes">General Inspection Notes / Quality Assessment</label>
+              <input type="text" class="form-control" id="insp_notes" placeholder="e.g. Visual quality checked, packaging intact, batch tags verified">
+            </div>
+          </div>
+
+          <div class="alert alert-secondary py-2 small mb-2 d-flex align-items-center">
+            <i class="bi bi-exclamation-circle-fill me-2 fs-5 flex-shrink-0 text-primary"></i>
+            <div>
+              <strong>Inspection Accounting Rule:</strong> For each item, the sum of <strong>Accepted + Rejected + Quarantined</strong> must exactly equal the <strong>Delivered Quantity</strong>. Only accepted quantities will be posted to usable stock.
+            </div>
+          </div>
+
+          <div class="table-responsive gym-table-scroll mb-3">
+            <table class="table gym-table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Product</th>
+                  <th class="text-center" style="width:100px;">Delivered</th>
+                  <th class="text-center" style="width:115px;">Accepted (Usable)</th>
+                  <th class="text-center" style="width:115px;">Rejected</th>
+                  <th class="text-center" style="width:115px;">Quarantined</th>
+                  <th class="text-center" style="width:110px;">Accounting</th>
+                  <th>Rejection / Quarantine Reasons &amp; Notes</th>
+                </tr>
+              </thead>
+              <tbody id="inspectionItemsTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Live Inspection Breakdown Totals -->
+          <div class="p-3 rounded border bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small">
+              <span class="me-3"><strong>Total Delivered:</strong> <span class="font-monospace fw-bold" id="inspSumDelivered">0</span></span>
+              <span class="me-3"><strong>Accepted:</strong> <span class="font-monospace fw-bold text-success" id="inspSumAccepted">0</span></span>
+              <span class="me-3"><strong>Rejected:</strong> <span class="font-monospace fw-bold text-danger" id="inspSumRejected">0</span></span>
+              <span class="me-3"><strong>Quarantined:</strong> <span class="font-monospace fw-bold text-warning-emphasis" id="inspSumQuarantined">0</span></span>
+            </div>
+            <div id="inspValidationNotice">
+              <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>All items fully accounted for</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success" id="inspSubmitBtn">
+            <i class="bi bi-check2-circle me-1"></i>Complete Inspection &amp; Post to Inventory
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Receiving / GRN Detail Modal -->
+<div class="modal fade" id="receivingDetailModal" tabindex="-1" aria-labelledby="receivingDetailModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="receivingDetailModalTitle">Goods Receipt Note (GRN) Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 p-3 bg-light rounded border mb-3" id="receivingDetailMeta"></div>
+        <div class="table-responsive gym-table-scroll">
+          <table class="table gym-table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Product</th>
+                <th class="text-center">Delivered</th>
+                <th class="text-center">Accepted (Usable)</th>
+                <th class="text-center">Rejected</th>
+                <th class="text-center">Quarantined</th>
+                <th class="text-end">Unit Cost</th>
+                <th>Inspection Notes / Reasons</th>
+              </tr>
+            </thead>
+            <tbody id="receivingDetailItemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between" id="receivingDetailFooter">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<template id="tmpl-row-receiving">
+  <tr>
+    <td class="row-grn-code font-monospace fw-semibold"></td>
+    <td class="row-po-code font-monospace"></td>
+    <td class="row-dr font-monospace"></td>
+    <td class="row-supplier"></td>
+    <td class="row-date"></td>
+    <td class="text-center font-monospace row-delivered"></td>
+    <td class="text-center font-monospace row-accepted"></td>
+    <td class="text-center font-monospace row-rejected"></td>
+    <td class="text-center row-status"></td>
+    <td class="text-end text-nowrap row-actions"></td>
+  </tr>
+</template>
+
+<template id="tmpl-row-receiving-item">
+  <tr class="receiving-row" data-product-id="" data-po-detail-id="">
+    <td class="row-product-name fw-semibold"></td>
+    <td class="text-center font-monospace row-qty-ordered"></td>
+    <td class="text-center font-monospace row-qty-prev"></td>
+    <td class="text-center font-monospace fw-bold row-qty-outstanding"></td>
+    <td><input type="number" class="form-control form-control-sm text-center font-monospace row-qty-input" min="0" step="1" value="0"></td>
+    <td class="text-center font-monospace row-qty-remaining"></td>
+    <td><input type="text" class="form-control form-control-sm row-note-input" placeholder="Delivery notes / observation"></td>
+  </tr>
+</template>

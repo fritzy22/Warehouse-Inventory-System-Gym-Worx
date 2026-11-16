@@ -1,0 +1,100 @@
+<div id="authScreen" class="gw-auth-screen min-vh-100 position-relative overflow-hidden d-flex flex-column align-items-center justify-content-center" <?php echo !empty($isLoggedIn) ? 'hidden' : ''; ?>>
+
+  <!-- Solid Dark Background Layer (#0D0C0A) -->
+  <div class="gw-auth-bg-layer" aria-hidden="true"></div>
+
+  <!-- Centered Login Container -->
+  <div class="gw-auth-center-wrap position-relative z-1 w-100 d-flex flex-column align-items-center justify-content-center p-3">
+
+    <!-- Centered Translucent Login Card -->
+    <div class="gw-login-card position-relative overflow-hidden" id="loginCard">
+
+      <!-- Card Header: Isometric Cube Logo, Brand Title & Subtitle -->
+      <div class="text-center mb-4">
+        <!-- GymWorx Isometric Cube Logo (Monochrome Dirty-White #F5F3EF) -->
+        <div class="gw-login-logo-wrap d-inline-flex align-items-center justify-content-center mb-3">
+          <svg class="gw-cube-logo-svg" width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="GymWorx Logo">
+            <!-- Isometric Cube Outer Hexagon -->
+            <path d="M24 5L41 14.5V33.5L24 43L7 33.5V14.5L24 5Z" stroke="#F5F3EF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Interior Edges Meeting at Center Vertex -->
+            <path d="M24 23.5V43" stroke="#F5F3EF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 14.5L24 23.5L41 14.5" stroke="#F5F3EF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Top Face Dots -->
+            <circle cx="17" cy="13.5" r="1.6" fill="#F5F3EF"/>
+            <circle cx="24" cy="14.5" r="1.6" fill="#F5F3EF"/>
+            <circle cx="31" cy="15.5" r="1.6" fill="#F5F3EF"/>
+            <!-- Left Face Dots -->
+            <circle cx="14" cy="27" r="1.6" fill="#F5F3EF"/>
+            <circle cx="18" cy="32" r="1.6" fill="#F5F3EF"/>
+            <!-- Right Face Dot -->
+            <circle cx="32" cy="29" r="1.6" fill="#F5F3EF"/>
+          </svg>
+        </div>
+
+        <!-- Brand Name -->
+        <h1 class="gw-brand-title-main mb-0">GYMWORX</h1>
+        <h2 class="gw-brand-title-sub mb-2">WAREHOUSE</h2>
+
+        <!-- Subtitle -->
+        <p class="gw-brand-system-subtitle mb-0">INVENTORY MANAGEMENT SYSTEM</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="d-block needs-validation" novalidate>
+        <!-- Alert container for error messages -->
+        <div class="alert gw-login-alert py-2 px-3 small mb-3" id="loginErrorAlert" role="alert" hidden></div>
+
+        <!-- Username Input -->
+        <div class="mb-3">
+          <label class="form-label gw-input-label d-block" for="login_username">USERNAME</label>
+          <div class="gw-input-group position-relative">
+            <span class="gw-input-icon-wrap position-absolute top-50 translate-middle-y">
+              <i class="bi bi-person"></i>
+            </span>
+            <input type="text" class="form-control gw-form-input" id="login_username" name="username" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter your username">
+          </div>
+          <div class="invalid-feedback">Please enter your username.</div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="mb-3">
+          <label class="form-label gw-input-label d-block" for="login_password">PASSWORD</label>
+          <div class="gw-input-group position-relative has-validation">
+            <span class="gw-input-icon-wrap position-absolute top-50 translate-middle-y">
+              <i class="bi bi-lock"></i>
+            </span>
+            <input type="password" class="form-control gw-form-input" id="login_password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+            <button type="button" class="btn gw-input-eye-btn position-absolute top-50 translate-middle-y" id="toggleLoginPassword" aria-label="Show password" aria-pressed="false" tabindex="-1">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback">Please enter your password.</div>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="form-check d-flex align-items-center gap-2 mb-4">
+          <input class="form-check-input gw-remember-check" type="checkbox" id="login_remember" name="remember">
+          <label class="form-check-label gw-remember-label user-select-none" for="login_remember">
+            Remember me
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-1">
+          <button type="submit" class="btn gw-btn-login w-100 d-flex align-items-center justify-content-center gap-2" id="loginSubmitBtn" style="background-color: #F5F3EF !important; color: #111110 !important; border: 1px solid #F5F3EF !important;">
+            <i class="bi bi-box-arrow-in-right fs-5" style="color: #111110 !important;"></i>
+            <span style="color: #111110 !important; font-weight: 700;">LOGIN</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+    <!-- Centered Footer Copyright -->
+    <footer class="gw-auth-footer text-center mt-4">
+      &copy; <?= date('Y') ?> GymWorx Warehouse. All rights reserved.
+    </footer>
+
+  </div>
+
+</div>

@@ -1,0 +1,231 @@
+<section class="panel" id="panel-product" hidden>
+  <!-- Page Header & Summary Cards Row -->
+  <div class="gw-product-header-row d-flex flex-column flex-xl-row justify-content-between align-items-start align-items-xl-center gap-3 mb-4">
+    <!-- Left: Icon + Title + Subtitle -->
+    <div class="d-flex align-items-start gap-3">
+      <div class="gw-page-title-badge flex-shrink-0" aria-hidden="true">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <div>
+        <h1 class="h3 mb-1 fw-bold gw-product-page-title">Product Inventory</h1>
+        <p class="mb-0 gw-product-page-subtitle">Monitor your inventory levels and keep your products in stock.</p>
+      </div>
+    </div>
+
+    <!-- Right: 3 Compact Summary Cards + Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3 ms-xl-auto w-100 w-xl-auto justify-content-start justify-content-xl-end">
+      <div class="gw-product-summary-cards d-flex flex-wrap align-items-stretch gap-2 gap-sm-3 flex-grow-1 flex-sm-grow-0">
+        <!-- Critical Card -->
+        <button type="button" class="gw-prod-summary-card gw-card-critical text-start" data-product-filter="critical" onclick="toggleProductHealthFilter('critical')" title="Filter critical stock items">
+          <span class="gw-sum-icon icon-critical" aria-hidden="true">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </span>
+          <div class="gw-sum-body">
+            <div class="gw-sum-title text-critical">CRITICAL</div>
+            <div class="gw-sum-metric">
+              <span class="gw-sum-number text-critical" id="productStatCritical">0</span>
+              <span class="gw-sum-unit">item(s)</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Low Stock Card -->
+        <button type="button" class="gw-prod-summary-card gw-card-low text-start" data-product-filter="low" onclick="toggleProductHealthFilter('low')" title="Filter low stock items">
+          <span class="gw-sum-icon icon-low" aria-hidden="true">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </span>
+          <div class="gw-sum-body">
+            <div class="gw-sum-title text-low">LOW STOCK</div>
+            <div class="gw-sum-metric">
+              <span class="gw-sum-number text-low" id="productStatLow">0</span>
+              <span class="gw-sum-unit">item(s)</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Well Stocked Card -->
+        <button type="button" class="gw-prod-summary-card gw-card-good text-start" data-product-filter="healthy" onclick="toggleProductHealthFilter('healthy')" title="Filter well stocked items">
+          <span class="gw-sum-icon icon-good" aria-hidden="true">
+            <i class="bi bi-check-lg"></i>
+          </span>
+          <div class="gw-sum-body">
+            <div class="gw-sum-title text-good">WELL STOCKED</div>
+            <div class="gw-sum-metric">
+              <span class="gw-sum-number text-good" id="productStatGood">0</span>
+              <span class="gw-sum-unit">item(s)</span>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <button type="button" class="btn gw-btn-magenta d-inline-flex align-items-center gap-2 text-nowrap" id="btnViewLowStock" onclick="toggleLowStockViewButton()">
+          <i class="bi bi-eye"></i>
+          <span id="btnViewLowStockText">View Low Stock Items</span>
+        </button>
+        <button type="button" class="btn gw-btn-outline-magenta d-inline-flex align-items-center gap-1 text-nowrap" data-bs-toggle="modal" data-bs-target="#productModal" data-module="product">
+          <i class="bi bi-plus-lg"></i>
+          <span>Add Product</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Search and Category Filter Row -->
+  <div class="row g-2 mb-3">
+    <div class="col-12 col-md-8">
+      <div class="input-group input-group-sm gw-mobile-product-search">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="search" class="form-control border-start-0" id="gw_search_productTable" placeholder="Search products, categories, or SKU..." aria-label="Search products">
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white"><i class="bi bi-funnel text-muted"></i></span>
+        <select class="form-select" id="gw_category_productFilter" onchange="handleProductCategoryFilterChange()" aria-label="Filter by Category">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Products Table Card -->
+  <div class="card gw-product-table-card gym-table-container shadow-sm" id="productMainCard">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+      <h6 class="mb-0 gw-section-title">All Products &amp; Stock</h6>
+      <small class="text-muted">Master product catalog and inventory balances</small>
+    </div>
+    <!-- Responsive 5-Column Product Inventory Table (Desktop, Tablet & Mobile) -->
+    <div class="table-responsive gw-product-table-scroll gym-table-scroll">
+      <table class="table mb-0 align-middle gw-table-product gym-table" id="productMainTable">
+        <thead>
+          <tr>
+            <th class="ps-3 ps-md-4 gw-sortable-th" tabindex="0" role="button" data-product-sort="product_name" onclick="sortProductsBy('product_name')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortProductsBy('product_name');}">
+              <span>PRODUCT NAME</span> <i class="bi bi-arrow-down-up gw-sort-icon"></i>
+            </th>
+            <th class="gw-sortable-th" tabindex="0" role="button" data-product-sort="category_name" onclick="sortProductsBy('category_name')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortProductsBy('category_name');}">
+              <span>CATEGORY</span> <i class="bi bi-arrow-down-up gw-sort-icon"></i>
+            </th>
+            <th class="gw-sortable-th" tabindex="0" role="button" data-product-sort="unit_measure" onclick="sortProductsBy('unit_measure')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortProductsBy('unit_measure');}">
+              <span>UNIT</span> <i class="bi bi-arrow-down-up gw-sort-icon"></i>
+            </th>
+            <th class="gw-sortable-th" tabindex="0" role="button" data-product-sort="unit_price" onclick="sortProductsBy('unit_price')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortProductsBy('unit_price');}">
+              <span>UNIT PRICE</span> <i class="bi bi-arrow-down-up gw-sort-icon"></i>
+            </th>
+            <th class="pe-3 pe-md-4 text-end gw-actions-th">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="productTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Legacy mobile container kept hidden for DOM compatibility -->
+    <div class="d-none" id="productMobileList" aria-hidden="true"></div>
+
+    <!-- Table Pagination Footer -->
+    <div class="card-footer bg-transparent d-flex flex-row align-items-center justify-content-between gap-2 py-3 px-3 px-md-4 gw-product-table-footer" id="productTableFooter">
+      <div class="text-muted small" id="productPaginationInfo">Showing 0 of 0 products</div>
+      <div class="d-flex align-items-center gap-1" id="productPaginationControls" role="navigation" aria-label="Product pagination"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Inventory Details Modal -->
+<div class="modal fade gw-inventory-details-modal" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalTitle" aria-hidden="true" data-bs-keyboard="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable gw-inventory-modal-dialog">
+    <div class="modal-content gw-inventory-modal-content">
+      <div class="modal-header gw-inventory-modal-header">
+        <h5 class="modal-title fw-bold mb-0" id="productDetailModalTitle">Inventory Details</h5>
+        <button type="button" class="btn-close gw-inventory-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body gw-inventory-modal-body" id="productDetailModalBody"></div>
+      <div class="modal-footer gw-inventory-modal-footer" id="productDetailModalFooter">
+        <button type="button" class="btn gw-btn-modal-close" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <form id="productForm">
+        <div class="modal-header border-bottom">
+          <h5 class="modal-title fw-bold" id="productModalTitle">Add Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="product_id">
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="product_name">Product Name</label>
+            <input type="text" class="form-control" id="product_name" required placeholder="Enter product name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="product_category_id">Category</label>
+            <select class="form-select" id="product_category_id" required></select>
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm mb-3">
+              <label class="form-label fw-semibold" for="unit_measure">Unit of Measure</label>
+              <input type="text" class="form-control" id="unit_measure" required placeholder="e.g. Unit, Piece, Tub">
+            </div>
+            <div class="col-12 col-sm mb-3">
+              <label class="form-label fw-semibold" for="unit_price">Unit Price (PHP)</label>
+              <input type="number" class="form-control" id="unit_price" step="0.01" min="0" required placeholder="0.00">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm mb-3">
+              <label class="form-label fw-semibold" for="reorder_level">Reorder Threshold</label>
+              <input type="number" class="form-control" id="reorder_level" min="0" value="10" required placeholder="10">
+              <div class="form-text small text-muted">Triggers replenishment alerts at or below this level.</div>
+            </div>
+            <div class="col-12 col-sm mb-3">
+              <label class="form-label fw-semibold" for="max_stock">Maximum Stock Capacity</label>
+              <input type="number" class="form-control" id="max_stock" min="1" value="100" required placeholder="100">
+              <div class="form-text small text-muted">Target capacity for replenishment calculations.</div>
+            </div>
+          </div>
+          <div class="row" id="openingStockRow">
+            <div class="col-12 mb-1">
+              <label class="form-label fw-semibold" for="opening_stock">Opening Stock Balance (Optional)</label>
+              <input type="number" class="form-control" id="opening_stock" min="0" value="0" placeholder="0">
+              <div class="form-text small text-muted">Initial usable stock on hand (creates an Opening Stock Balance movement record).</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top bg-light bg-opacity-50">
+          <button type="button" class="btn btn-outline-danger btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn gw-btn-magenta px-4 fw-semibold">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Product Inventory Table Row Template -->
+<template id="tmpl-row-product">
+  <tr class="align-middle">
+    <td class="ps-3 ps-md-4 py-2">
+      <strong class="row-name gw-prod-name"></strong>
+    </td>
+    <td class="py-2"><span class="row-cat gw-prod-category"></span></td>
+    <td class="py-2 gw-prod-unit row-unit"></td>
+    <td class="py-2 gw-prod-price row-price"></td>
+    <td class="pe-3 pe-md-4 py-2 text-end text-nowrap row-actions"></td>
+  </tr>
+</template>
+
+<!-- Store Requester Read-Only Branch Inventory Table Row Template -->
+<template id="tmpl-row-product-requester">
+  <tr class="align-middle">
+    <td class="ps-3 ps-md-4 py-2.5">
+      <div class="fw-bold text-dark row-name gw-prod-name" role="button" tabindex="0"></div>
+    </td>
+    <td class="py-2.5"><span class="row-cat gw-prod-category"></span></td>
+    <td class="py-2.5 text-center font-monospace fw-bold fs-6 row-stock"></td>
+    <td class="py-2.5 text-muted small row-unit"></td>
+    <td class="pe-3 pe-md-4 py-2.5 text-end row-status"></td>
+  </tr>
+</template>
